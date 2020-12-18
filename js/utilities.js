@@ -1,3 +1,6 @@
+const { COPYFILE_FICLONE_FORCE } = require('constants');
+const e = require('express');
+
 async function getCIArray(_config, _ci_type) {
 
     const fetch = require('isomorphic-fetch');
@@ -22,7 +25,7 @@ async function getCIArray(_config, _ci_type) {
     } //try
     catch (_err) {
 
-        console.error("NO CI FOUND - NO SYNC WILL HAPPEN", _err);
+        console.error("[utilities::getCIArray] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
 
     } //catch
 
@@ -108,7 +111,7 @@ async function getNREntities(_config, _entity_shape, _cursor) {
 
 async function reconcileEntity(_ciType, _entity, _candidateCIs) { 
 
-    console.log("Entity: ", _entity);
+//    console.log("Entity: ", _entity);
     var __entityUpdatePayload = {
         found: false,
         entity_guid: _entity.guid,
@@ -119,29 +122,33 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
     //right now I am just going to loop the array but this should be more sophisticated
     for (var i = 0; i < _candidateCIs.length; i++) {
 
-        if (_candidateCIs[i].name === _entity.name) {
+        // select matching strategy
+        if (_ciType.nr_entity_key.strategy === "caseless_match") {
 
-            __entityUpdatePayload.found = true;
+            
+            if (_candidateCIs[i].name.toUpperCase() === _entity.name.toUpperCase()) {
 
-            //set the tag:key relationship we want to persist
-            for (var j = 0; j < _ciType.tags.length; j++) {
-
-                __entityUpdatePayload.tags.push({
-                    key: _ciType.nr_entity_tag_key[_ciType.tags[j]],
-                    value: _candidateCIs[i][_ciType.tags[j]]
-                });
-                //console.log("value: ",  __entityUpdatePayload);
-            } //for
-  
-            console.log("found match " + _entity.name, _candidateCIs[i]);
-            break;
+                __entityUpdatePayload.found = true;
+                __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                break;
+            } //if
 
         } //if
+        else if (_ciType.nr_entity_key.strategy === "exact_match") {
+
+            if (_candidateCIs[i].name === _entity.name) {
+
+                __entityUpdatePayload.found = true;
+                __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                break;
+            } //if
+
+        } //else if
         else {
 
-           // console.log("no match .... ");
+            console.log("No key matching strategy recognized, please review config.json.");
         } //else
-        
+
     } //for
 
 
@@ -186,11 +193,12 @@ async function updateEntity(_config, _entityUpdate) {
     
             __responseJson = await __apiResponse.json();
             console.log("Write response", __responseJson);
+            console.log("Write response errz", __responseJson.data.taggingReplaceTagsOnEntity.errors);
             
         } //try
         catch(_err) { 
     
-            console.log("Problem writing tag for entity: " + _entity + " trying to write " + _value);
+            console.log("Problem writing tag for entity: " + _entityUpdate.name + " trying to write " + _entityUpdate.tags[i].key + " : " + _entityUpdate.tags[i].value);
             console.error("[utilities::updateEntity]", _err);
             __entityUpdateResponse.message = "FAILURE: " + _err;
         } //catch
@@ -200,6 +208,71 @@ async function updateEntity(_config, _entityUpdate) {
     return(__entityUpdateResponse);
 
 } //updateEntity
+
+async function _formatAdditiveTags(_entity, _ciType, _ci) {
+
+    var __entityTags = [];
+    var __tagEvaluator = false;
+
+    // loop the tag array defined in the ci configuration
+    for (var i = 0; i < _ciType.tags.length; i++) {
+    
+        __tagEvaluator = await _entityHasTagAndValue(_entity, _ciType.nr_entity_tag_key[_ciType.tags[i]], _ci[_ciType.tags[i]]);
+
+        if (!__tagEvaluator) {
+
+            //check to see that we are not pushing a null string - api does not cotton to this.
+            if (_ci[_ciType.tags[i]] !== '') {
+                __entityTags.push({
+                    key: _ciType.nr_entity_tag_key[_ciType.tags[i]],
+                    value: _ci[_ciType.tags[i]]
+                });
+            } //if
+            else{
+                console.log("Attempting to update an Entity wwith a tag where there is no value, skipping. Tag: " + _ciType.nr_entity_tag_key[_ciType.tags[i]] + " --> " + _ci[_ciType.tags[i]]);
+            } //else
+
+        } //if
+
+    } //for
+    console.log("entity tags being added: ",  __entityTags);
+    return (__entityTags);
+} // _formatAdditiveTags
+
+async function _entityHasTagAndValue(_entity, _key, _value) {
+console.log("The entity: ", _entity);
+console.log("The key: ", _key);
+console.log("The value: ", _value);
+
+    var __rc = false;
+console.log("______________________________________ loop");
+    for (var i = 0; i < _entity.tags.length; i++) {
+//
+//        console.log("entity tag: " + _entity.tags[i].key);
+//        console.log("propsoed key: " + _key);
+        //does this entity have the tag get 
+        if (_entity.tags[i].key === _key) {
+
+//            console.log("entity valueL: ", _entity.tags[i].values);
+//            console.log("proposed value: " + _value);
+            //does this entity's tag value the same
+            if (_entity.tags[i].values.includes(_value)) {
+                __rc = true;
+                console.log("value matches!");
+            } //if
+            else {
+                console.log("values does not match");
+            } //else
+        } //if
+        else {
+            console.log("no match");
+        } //else
+    } //for
+console.log("______________________________________ loop");
+
+    return(__rc);
+} //_entityHasTag
+
 
 module.exports = {
     getCIArray: getCIArray,

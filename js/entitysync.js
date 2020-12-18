@@ -32,8 +32,6 @@ async function cycleSync(_config) {
 
                         for (var j = 0; j < __nrResponseJson.data.actor.entitySearch.results.entities.length; j++) {
 
-                            //TODO determine if we have an entity that has been previously sync'ed
-
                             __entityUpdatePayload = await reconcileEntity(_config.ci_types[i], __nrResponseJson.data.actor.entitySearch.results.entities[j], __cis);
 
                             if (__entityUpdatePayload.found) {
