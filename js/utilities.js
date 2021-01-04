@@ -105,6 +105,8 @@ async function getNREntities(_config, _entity_shape, _cursor) {
         console.error("[utilities::getNREntities]", _err);
     } //catch
 
+//    console.log("Entities returned", __json_response);
+//    console.log("---response --> " + JSON.stringify(__json_response));
     return(__json_response);
 
 } //getNREntities
@@ -160,12 +162,17 @@ async function updateEntity(_config, _entityUpdate) {
 
 
     const fetch = require('isomorphic-fetch');
-    console.log("This is an update ... ", _entityUpdate);
+//    console.log("This is an update ... ", _entityUpdate);
     var __entityUpdateResponse = _entityUpdate;
     __entityUpdateResponse.message = "SUCCESS";
     var __mutation = null;
     var __apiResponse = null;
     var __responseJson = null;
+
+    if (_entityUpdate.tags.length === 0) {
+        
+        __entityUpdateResponse.message = "SKIPPED";
+    } //if
 
     for (var i = 0; i < _entityUpdate.tags.length; i++) {
 
@@ -193,7 +200,7 @@ async function updateEntity(_config, _entityUpdate) {
     
             __responseJson = await __apiResponse.json();
             console.log("Write response", __responseJson);
-            console.log("Write response errz", __responseJson.data.taggingReplaceTagsOnEntity.errors);
+            console.log("Write response errz", __responseJson.data.taggingAddTagsToEntity.errors); //TODO adding - review context
             
         } //try
         catch(_err) { 
@@ -229,10 +236,13 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
                 });
             } //if
             else{
-                console.log("Attempting to update an Entity wwith a tag where there is no value, skipping. Tag: " + _ciType.nr_entity_tag_key[_ciType.tags[i]] + " --> " + _ci[_ciType.tags[i]]);
+                console.log("Attempting to update an Entity with a tag where there is no value, skipping. Tag: " + _ciType.nr_entity_tag_key[_ciType.tags[i]] + " --> " + _ci[_ciType.tags[i]]);
             } //else
 
         } //if
+        else {
+            console.log("Entity already has tag and the same value, skipping update.")
+        } //else
 
     } //for
     console.log("entity tags being added: ",  __entityTags);
@@ -240,12 +250,12 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
 } // _formatAdditiveTags
 
 async function _entityHasTagAndValue(_entity, _key, _value) {
-console.log("The entity: ", _entity);
-console.log("The key: ", _key);
-console.log("The value: ", _value);
+//console.log("The entity: ", _entity);
+//console.log("The key: ", _key);
+//console.log("The value: ", _value);
 
     var __rc = false;
-console.log("______________________________________ loop");
+console.log("______________________________________ recon loop");
     for (var i = 0; i < _entity.tags.length; i++) {
 //
 //        console.log("entity tag: " + _entity.tags[i].key);
@@ -268,15 +278,45 @@ console.log("______________________________________ loop");
             console.log("no match");
         } //else
     } //for
-console.log("______________________________________ loop");
+console.log("______________________________________ recon loop");
 
     return(__rc);
 } //_entityHasTag
 
+async function transmitEvents(_config, _eventsArray) {
+    console.log("Transmitting events ... ");
+        if (_eventsArray.length > 0) {
+    
+            const fetch = require('isomorphic-fetch');
+    
+            try {
+                const __response = await fetch(_config.nrdb_insert_url, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Insert-Key': _config.nrdb_insert_api_key
+                    },
+                    body: JSON.stringify(_eventsArray)
+               });
+        
+               console.log(">> Event Transmit Result: " + __response.ok);
+            } //try
+            catch (_err) {
+                
+                console.log("APM: Failure transmitting events. ", _err);
+            } //catch
+            
+        } //if
+        else {
+            console.log("No events to transmit")
+        } //else
+    
+    } //transmitEvents
 
 module.exports = {
     getCIArray: getCIArray,
     getNREntities: getNREntities,
     reconcileEntity: reconcileEntity,
-    updateEntity: updateEntity
+    updateEntity: updateEntity,
+    transmitEvents: transmitEvents
 };
