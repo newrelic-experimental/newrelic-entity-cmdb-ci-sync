@@ -24,8 +24,62 @@ At present the process is deployed as a standalone service. It is the intention 
 Configuration of the service is limited to command line parameters and the comprehensive config file. Options for both sources are outlined below. 
 
 ### Config file format
+The ```config.json``` file that is used to configure the synchronization service is divided into 3 main sections (ci_types array, provider object, and core configuration parameters).
+
+**Core Configuration**
+
+```javascript
+"nrdb_insert_api_key": "NRII-########################",
+"nrdb_insert_url": "https://insights-collector.newrelic.com/v1/accounts/#######/events",
+"nrdb_entitysync_event_name": "SNOW_ENTITY_SYNC",
+"nr_graph_api_key": "NRAK-###################",
+"nr_graph_account": "######",
+"daily_sync_time": "3",
+"version": "3",
+"express_port": "7373"
+```
+**Provider Object**
+
+```javascript 
+"provider" : {
+    "type": "servicenow",
+    "api_url": "https://###########.service-now.com/",
+    "api_user_token": "#######################",
+    "api_uname": "#######",
+    "api_pword": "#######"
+}
+```
 
 
+**CI Types Array**
+
+```javascript 
+"ci_types": [{
+    "type": "cmdb_ci_app_server",
+    "key": "name",
+    "api": "/api/now/table/cmdb_ci_app_server",
+    "api_query_parms": "?sysparm_fields=software_install%2Cmac_address%2Cowned_by%2Cattributes%2Ccorrelation_id%2Ccost_center%2Cu_recovery_plan_name%2Csys_id%2Csys_tags%2Csys_class_name%2Cname%2Csupported_by%2Csubcategory%2Cassignment_group%2Ccategory%2Cip_address%2Casset_tag%2Crunning_process%2Crunning_process_key_parameters%2Crp_command_hash",
+    "api_method": "GET",
+    "tags": [
+        "sys_class_name",
+        "sys_id",
+        "assignment_group"
+    ],
+    "nr_entity_domain": "APM",
+    "nr_entity_type": "APPLICATION",
+    "nr_entity_key": {
+        "type": "attribute",
+        "key": "name",
+        "strategy": "caseless_match"
+    },
+    "nr_entity_update": false,
+    "nr_entity_tag_key": {
+        "sys_class_name": "SNOW_CI_CLASS",
+        "sys_id": "SNOW_CMDB_CI",
+        "assignment_group": "SNOW_ASSIGN_GROUP"
+    }
+}, ... ]
+```
 
 ### ServiceNow specific config
 
