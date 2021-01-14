@@ -33,8 +33,7 @@ async function cycleSync(_config) {
         __followCursor = true; //ensuring the entity loop is re-set in advance of subsequent entity lookups
         console.log("Running Sync for type: " + _config.ci_types[i].type);
         __cis = await getCIArray(_config, _config.ci_types[i]); //prospective CIs 10000 max
-        console.log("CIs: " + __cis.length);
-       // console.log("CIs: ", __cis);
+        console.log("CIs returned: " + __cis.length);
         
        //synchronization run reporting
         __reportingEvents.push({
@@ -49,7 +48,7 @@ async function cycleSync(_config) {
             try { 
                 
                 __nrResponseJson = await getNREntities(_config, _config.ci_types[i], __cursorId);
-console.log("next cursor ...> ", __nrResponseJson.data.actor.entitySearch.results.nextCursor);
+
                 if (__nrResponseJson !== null && __nrResponseJson.data.actor.entitySearch !== null) { 
 
                     if (__nrResponseJson.data.actor.entitySearch.results.entities !== undefined) { 

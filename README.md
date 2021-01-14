@@ -1,41 +1,64 @@
 [![New Relic Experimental header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#new-relic-experimental)
 
-# [Project Name] [build badges go here when available]
+# New Relic Entity CMDB CI Sync [build badges go here when available]
 
->[Brief description - what is the project and value does it provide? How often should users expect to get releases? How is versioning set up? Where does this project want to go?]
+This project provides a set of opinionated mechanisms to synchronize Entity tags in New Relic with other sources of entity metadata. While initially conceived to synchronize CI attributes from ServiceNow CMDB, the scripts are intended to be modularized to provide metadata synchronization with other systems of record. 
 
-## Installation
+## How does it work?
 
-> [Include a step-by-step procedure on how to get your code installed. Be sure to include any third-party dependencies that need to be installed separately]
+The synchronization process works as follows:
+- The process configuration provides a link between a set of _provider_ entries and a set of New Relic Entities. 
+- The process loops over the New Relic Entity Set and attempts to resolve the current entity with a match from the _provider_ using a predefined matching strategy. 
+- If a match is discovered the attributes denoted in the configuration for the provider are applied to the New Relic Entity as tags (key and value).  
 
-## Getting Started
+## How is it deployed?
 
->[Simple steps to start working with the software similar to a "Hello World"]
+At present the process is deployed as a standalone service. It is the intention of this project to provide the capability as:
+- a standalone service
+- a containerized service (tbd)
+- a serverless function (tbd)
+- a New Relic Synthetic (tbd)
 
-## Usage
+## Configuration
 
->[**Optional** - Include more thorough instructions on how to use the software. This section might not be needed if the Getting Started section is enough. Remove this section if it's not needed.]
+Configuration of the service is limited to command line parameters and the comprehensive config file. Options for both sources are outlined below. 
 
-## Building
+### Config file format
 
->[**Optional** - Include this section if users will need to follow specific instructions to build the software from source. Be sure to include any third party build dependencies that need to be installed separately. Remove this section if it's not needed.]
 
-## Testing
 
->[**Optional** - Include instructions on how to run tests if we include tests with the codebase. Remove this section if it's not needed.]
+### ServiceNow specific config
+
+### Command line parameters
+
+The service deployment options expect a paramter of either "server" or "single-run" as the main runtime entry. 
+- server: initalizes the service as a web application and executes the synchronization process based on the ```"daily_sync_time": "3"``` configuration parameter
+- single-run: executes the synchronization process immediately and terminates the application
+
+
+## Deployment
+
+### Standalone service
+
+### Containerized service
+
+### Serverless function
+
+### New Relic Synthetic
+
+## Operation
+
+### Expected behavior
+
+### Audit reporting
 
 ## Support
 
 New Relic has open-sourced this project. This project is provided AS-IS WITHOUT WARRANTY OR DEDICATED SUPPORT. Issues and contributions should be reported to the project here on GitHub.
 
->[Choose 1 of the 2 options below for Support details, and remove the other one.]
+We encourage you to bring your experiences and questions to the [Explorers Hub](https://discuss.newrelic.com) where our community members collaborate on solutions and new ideas.
 
->[Option 1 - no specific thread in Community]
->We encourage you to bring your experiences and questions to the [Explorers Hub](https://discuss.newrelic.com) where our community members collaborate on solutions and new ideas.
-
->[Option 2 - thread in Community]
->New Relic hosts and moderates an online forum where customers can interact with New Relic employees as well as other customers to get help and share best practices. Like all official New Relic open source projects, there's a related Community topic in the New Relic Explorers Hub.
->You can find this project's topic/threads here: [URL for Community thread]
+Please open issues [in this repo](https://github.com/newrelic-experimental/newrelic-entity-cmdb-ci-sync/issues) for bugs or enhancements.  
 
 ## Contributing
 
@@ -49,6 +72,5 @@ If you believe you have found a security vulnerability in this project or any of
 
 ## License
 
-[Project Name] is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
+newrelic-entity-cmdb-ci-sync is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
->[If applicable: [Project Name] also uses source code from third-party libraries. You can find full details on which libraries are used and the terms under which they are licensed in the third-party notices document.]
