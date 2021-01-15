@@ -103,7 +103,10 @@ The ```config.json``` file that is used to configure the synchronization service
 - _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity.
 - _nr_entity_domain_: The New Relic Entity domain used for GraphQL entity search (APM|BROWSER|INFRA|SYNTH|MOBILE)
 - _nr_entity_type_: The New Relic Entity type used for GraphQL entity search (APPLICATION|DASHBOARD|HOST|MONITOR|WORKLOAD)
-- _nr_entity_key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
+- _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source. 
+- _nr_entity_key.type_: How the value relates to the New Relic Entity. Currently this is only as an Entity attribute, but is to include Entity _tags_ as well. 
+- _nr_entity_key.key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
+- _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match).
 - _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
 - _nr_entity_tag_key_: The New Relic Entity key value (name) for the _provider_ attribute value.
 
