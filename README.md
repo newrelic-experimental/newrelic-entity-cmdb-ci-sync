@@ -35,21 +35,35 @@ The ```config.json``` file that is used to configure the synchronization service
 "nr_graph_api_key": "NRAK-###################",
 "nr_graph_account": "######",
 "daily_sync_time": "3",
+"express_port": "7373",
 "version": "3",
-"express_port": "7373"
 ```
+- _nrdb_insert_api_key_: The API key used to insert New Relic NRDB events.
+- _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written.
+- _nrdb_entitysync_event_name_: The event name for the entity sync housekeeping events.  
+- _nr_graph_api_key_: The API key used to query New Relic Entities via the [graph api](https://api.newrelic.com/graphiql?#query=) 
+- ~~_nr_graph_accont_: The New Relic account ID that is the target for Graph API calls.~~ REMOVE ME
+- _daily_sync_time_: The time of day GMT the synchronization process executes.
+- _express_port_: The port the service based deployment uses to communicate in http.
+- _version_: specifies the current version of this config document.
+  
 **Provider Object**
 
 ```javascript 
 "provider" : {
     "type": "servicenow",
     "api_url": "https://###########.service-now.com/",
-    "api_user_token": "#######################",
+    "api_key": "#######################",
     "api_uname": "#######",
     "api_pword": "#######"
 }
 ```
-
+- _provider_: The encapsulating object for provider information (i.e. where this services goes to get the prospective Entity information).
+- _type_: Used to determine the access and conditional formatting logic for the provider calls. Possible options include (servicenow,)
+- _api_url_: The root api url of the provider.
+- _api_key_: The api token or key used for api calls (where applicable). 
+- _api_uname_: The username for API access (where applicable). 
+- _api_pword_: The password for API access (where applicable).
 
 **CI Types Array**
 
@@ -80,14 +94,28 @@ The ```config.json``` file that is used to configure the synchronization service
     }
 }, ... ]
 ```
+- _ci_types_: An array of ci_type objects. These objects define the details of the API calls to the provider system, and match those details to a New Relic Entity Search API call. 
+- _type_: 
+- _key_: The value from the provider entry that will be used for the resolution strategy.
+- _api_: The api path.
+- _api_query_parms_: The API query string. 
+- _api_method_: The http method (GET|POST)
+- _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity.
+- _nr_entity_domain_: The New Relic Entity domain used for GraphQL entity search (APM|BROWSER|INFRA|SYNTH|MOBILE)
+- _nr_entity_type_: The New Relic Entity type used for GraphQL entity search (APPLICATION|DASHBOARD|HOST|MONITOR|WORKLOAD)
+- _nr_entity_key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
+- _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
+- _nr_entity_tag_key_: The New Relic Entity key value (name) for the _provider_ attribute value.
 
 ### ServiceNow specific config
 
+TBD
+
 ### Command line parameters
 
-The service deployment options expect a paramter of either "server" or "single-run" as the main runtime entry. 
-- server: initalizes the service as a web application and executes the synchronization process based on the ```"daily_sync_time": "3"``` configuration parameter
-- single-run: executes the synchronization process immediately and terminates the application
+The service deployment options expect a parameter of either "server" or "single-run" as the main runtime entry. 
+- server: initializes the service as a web application and executes the synchronization process based on the ```"daily_sync_time": "3"``` configuration parameter.
+- single-run: executes the synchronization process immediately and terminates the application.
 
 
 ## Deployment
