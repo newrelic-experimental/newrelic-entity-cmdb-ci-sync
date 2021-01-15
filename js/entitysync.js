@@ -32,7 +32,7 @@ async function cycleSync(_config) {
 
         __followCursor = true; //ensuring the entity loop is re-set in advance of subsequent entity lookups
         console.log("Running Sync for type: " + _config.ci_types[i].type);
-        __cis = await getCIArray(_config, _config.ci_types[i]); //prospective CIs 10000 max
+        __cis = await getCIArray(_config, _config.ci_types[i]);
         console.log("CIs returned: " + __cis.length);
         
        //synchronization run reporting

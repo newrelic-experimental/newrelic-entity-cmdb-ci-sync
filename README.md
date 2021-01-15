@@ -33,7 +33,6 @@ The ```config.json``` file that is used to configure the synchronization service
 "nrdb_insert_url": "https://insights-collector.newrelic.com/v1/accounts/#######/events",
 "nrdb_entitysync_event_name": "SNOW_ENTITY_SYNC",
 "nr_graph_api_key": "NRAK-###################",
-"nr_graph_account": "######",
 "daily_sync_time": "3",
 "express_port": "7373",
 "version": "3",
@@ -42,7 +41,6 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written.
 - _nrdb_entitysync_event_name_: The event name for the entity sync housekeeping events.  
 - _nr_graph_api_key_: The API key used to query New Relic Entities via the [graph api](https://api.newrelic.com/graphiql?#query=) 
-- ~~_nr_graph_accont_: The New Relic account ID that is the target for Graph API calls.~~ REMOVE ME
 - _daily_sync_time_: The time of day GMT the synchronization process executes.
 - _express_port_: The port the service based deployment uses to communicate in http.
 - _version_: specifies the current version of this config document.

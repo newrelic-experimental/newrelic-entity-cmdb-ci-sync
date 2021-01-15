@@ -3,40 +3,13 @@ const e = require('express');
 
 async function getCIArray(_config, _ci_type) {
 
-    const fetch = require('isomorphic-fetch');
-    var base64 = require('base-64');
     var __cis = [];
-    var __api_response = null;
-    var __json_response = null;
 
     try {
 
         if (_config.provider.type === "servicenow") {
-
-            __api_response = await fetch(_config.provider.api_url + _ci_type.api + _ci_type.api_query_parms, {
-                method: _ci_type.api_method,
-                headers: { 
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
-                }
-            });
-
-            __json_response = await __api_response.json();
-
-            // var fs = require("fs");
-            // fs.writeFile('output.txt', JSON.stringify(__json_response), function(err) {
-            //     if (err) {
-            //        return console.error(err);
-            //     }
-            //     console.log("Data written successfully!");
-            //     console.log("Let's read newly written data");
-            //  });
-    
-            //__json_response = await __response;
-            //console.log("SNOW RESPONSE ", __json_response);
-            __cis = __json_response.result;
-
+                    
+            __cis = await _getServiceNowCIs(_config, _ci_type);
         } //if
         else {
 
@@ -52,7 +25,6 @@ async function getCIArray(_config, _ci_type) {
 
     return(__cis);
 } //getCIArray
-
 
 async function getNREntities(_config, _entity_shape, _cursor) {
 
@@ -183,7 +155,6 @@ async function updateEntity(_config, _entityUpdate) {
 
 
     const fetch = require('isomorphic-fetch');
-//    console.log("This is an update ... ", _entityUpdate);
     var __entityUpdateResponse = _entityUpdate;
     __entityUpdateResponse.message = "SUCCESS";
     var __mutation = null;
@@ -303,6 +274,48 @@ console.log("______________________________________ recon loop");
 
     return(__rc);
 } //_entityHasTag
+
+async function _getServiceNowCIs(_config, _ci_type) {
+
+    const fetch = require('isomorphic-fetch');
+    var base64 = require('base-64');
+    var __cis = [];
+    var __api_response = null;
+    var __json_response = null;
+    
+    try { 
+
+        __api_response = await fetch(_config.provider.api_url + _ci_type.api + _ci_type.api_query_parms, {
+            method: _ci_type.api_method,
+            headers: { 
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
+            }
+        });
+
+        __json_response = await __api_response.json();
+
+        // var fs = require("fs");
+        // fs.writeFile('output.txt', JSON.stringify(__json_response), function(err) {
+        //     if (err) {
+        //        return console.error(err);
+        //     }
+        //     console.log("Data written successfully!");
+        //     console.log("Let's read newly written data");
+        //  });
+
+        //__json_response = await __response;
+        //console.log("SNOW RESPONSE ", __json_response);
+        __cis = __json_response.result;
+    } //try
+    catch (_err) {
+
+        console.error("[utilities::_getServiceNowCIs] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
+    } //catch
+
+    return(__cis);
+} //_getServiceNowCIs
 
 async function transmitEvents(_config, _eventsArray) {
     console.log("Transmitting events ... ");
