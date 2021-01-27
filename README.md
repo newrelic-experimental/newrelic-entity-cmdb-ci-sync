@@ -15,9 +15,9 @@ The synchronization process works as follows:
 
 At present the process is deployed as a standalone service. It is the intention of this project to provide the capability as:
 - a standalone service
-- a containerized service (tbd)
-- a serverless function (tbd)
-- a New Relic Synthetic (tbd)
+- a containerized service (under development)
+- a serverless function (under development)
+- a New Relic Synthetic (under development)
 
 ## Configuration
 
@@ -104,13 +104,13 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source. 
 - _nr_entity_key.type_: How the value relates to the New Relic Entity. Currently this is only as an Entity attribute, but is to include Entity _tags_ as well. 
 - _nr_entity_key.key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
-- _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match).
+- _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match|exact_contains|caseless_contains).
 - _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
 - _nr_entity_tag_key_: The New Relic Entity key value (name) for the _provider_ attribute value.
 
 ### ServiceNow specific config
 
-TBD
+Please see CI Types and Provider section for details.
 
 ### Command line parameters
 
