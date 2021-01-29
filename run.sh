@@ -1,1 +1,1 @@
-nohup node ./js/index.js &
+nohup node ./js/index.js single-run

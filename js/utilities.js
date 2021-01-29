@@ -1,6 +1,3 @@
-const { COPYFILE_FICLONE_FORCE } = require('constants');
-const e = require('express');
-
 async function getCIArray(_config, _ci_type) {
 
     var __cis = [];
@@ -114,15 +111,44 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         tags: []
     };
 
-    //right now I am just going to loop the array but this should be more sophisticated
+    var __entity_key = null;
+
+    // determine the entity key
+    if (_ciType.nr_entity_key.type === 'attribute') {
+
+        // we will use the Entity attributes to reconcile the candidate CI
+        __entity_key = _entity[_ciType.nr_entity_key.key];
+    } // if
+    else if (_ciType.nr_entity_key.type === 'tag') {
+
+        // we will use the Entity tag value to reconcile the candidate CI
+        var __tags = _entity.tags.filter(tagset => tagset.key === _ciType.nr_entity_key.key);
+
+        if (__tags[0].values.length > 0) {
+            // in the case we have found arrays we will select the first array element
+            __entity_key = __tags[0].values[0]; 
+        } // if
+        else {
+            console.error("[utilities:reconcileEntity] No tag value found for " + _ciType.nr_entity_key.key + " on entity " + _entity.name);
+            return(__entityUpdatePayload);
+        } //else
+
+    } // else if
+    else {
+
+        // unknown type key - no match will be possible
+        console.error("[utilities:reconcileEntity] Unexpected nr_entity_key.type encountered " + _ciType.nr_entity_key.type + " no match possible. Check your config.json.");
+        return(__entityUpdatePayload);
+    } //else
+
+    // loop the array to provide opportunities for deep inspection
     for (var i = 0; i < _candidateCIs.length; i++) {
 
         // select matching strategy
         if (_ciType.nr_entity_key.strategy === "caseless_match") {
 
-            
-            if (_candidateCIs[i].name.toUpperCase() === _entity.name.toUpperCase()) {
-
+            //if (_candidateCIs[i].name.toUpperCase() === _entity.name.toUpperCase()) {
+            if (_candidateCIs[i][_ciType.key].toUpperCase() === __entity_key.toUpperCase()) {
                 __entityUpdatePayload.found = true;
                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
                 break;
@@ -131,11 +157,31 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         } //if
         else if (_ciType.nr_entity_key.strategy === "exact_match") {
 
-            if (_candidateCIs[i].name === _entity.name) {
-
+            //if (_candidateCIs[i].name === _entity.name) {
+            if (_candidateCIs[i][_ciType.key] === __entity_key) {
                 __entityUpdatePayload.found = true;
                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
                 break;
+            } //if
+
+        } //else if
+        else if (_ciType.nr_entity_key.strategy === "exact_contains") {
+
+            //if (_candidateCIs[i].name.includes(_entity.name)) {
+            if (_candidateCIs[i][_ciType.key].includes(__entity_key)) {
+                 __entityUpdatePayload.found = true;
+                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                 break;
+             } //if
+
+        } //else if
+        else if (_ciType.nr_entity_key.strategy === "caseless_contains") {
+
+            //if (_candidateCIs[i].name.toUpperCase().includes(_entity.name.toUpperCase())) {
+            if (_candidateCIs[i][_ciType.key].toUpperCase().includes(__entity_key.toUpperCase())) {
+                 __entityUpdatePayload.found = true;
+                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                 break;
             } //if
 
         } //else if
@@ -145,7 +191,6 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         } //else
 
     } //for
-
 
     return(__entityUpdatePayload);
 
@@ -247,7 +292,7 @@ async function _entityHasTagAndValue(_entity, _key, _value) {
 //console.log("The value: ", _value);
 
     var __rc = false;
-console.log("______________________________________ recon loop");
+//console.log("______________________________________ recon loop");
     for (var i = 0; i < _entity.tags.length; i++) {
 //
 //        console.log("entity tag: " + _entity.tags[i].key);
@@ -260,17 +305,17 @@ console.log("______________________________________ recon loop");
             //does this entity's tag value the same
             if (_entity.tags[i].values.includes(_value)) {
                 __rc = true;
-                console.log("value matches!");
+//                console.log("value matches!");
             } //if
-            else {
-                console.log("values does not match");
-            } //else
+//            else {
+//                console.log("values does not match");
+//            } //else
         } //if
-        else {
-            console.log("no match");
-        } //else
+//        else {
+//            console.log("no match");
+//        } //else
     } //for
-console.log("______________________________________ recon loop");
+//console.log("______________________________________ recon loop");
 
     return(__rc);
 } //_entityHasTag
@@ -295,18 +340,6 @@ async function _getServiceNowCIs(_config, _ci_type) {
         });
 
         __json_response = await __api_response.json();
-
-        // var fs = require("fs");
-        // fs.writeFile('output.txt', JSON.stringify(__json_response), function(err) {
-        //     if (err) {
-        //        return console.error(err);
-        //     }
-        //     console.log("Data written successfully!");
-        //     console.log("Let's read newly written data");
-        //  });
-
-        //__json_response = await __response;
-        //console.log("SNOW RESPONSE ", __json_response);
         __cis = __json_response.result;
     } //try
     catch (_err) {

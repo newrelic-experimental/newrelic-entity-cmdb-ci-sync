@@ -1,6 +1,6 @@
 [![New Relic Experimental header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#new-relic-experimental)
 
-# New Relic Entity CMDB CI Sync [build badges go here when available]
+# New Relic Entity CMDB CI Sync
 
 This project provides a set of opinionated mechanisms to synchronize Entity tags in New Relic with other sources of entity metadata. While initially conceived to synchronize CI attributes from ServiceNow CMDB, the scripts are intended to be modularized to provide metadata synchronization with other systems of record. 
 
@@ -99,10 +99,10 @@ The ```config.json``` file that is used to configure the synchronization service
 - _api_query_parms_: The API query string. 
 - _api_method_: The http method (GET|POST)
 - _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity.
-- _nr_entity_domain_: The New Relic Entity domain used for GraphQL entity search (APM|BROWSER|INFRA|SYNTH|MOBILE)
-- _nr_entity_type_: The New Relic Entity type used for GraphQL entity search (APPLICATION|DASHBOARD|HOST|MONITOR|WORKLOAD)
+- _nr_entity_domain_: The New Relic Entity domain used for GraphQL entity search (APM | BROWSER | INFRA | SYNTH | MOBILE)
+- _nr_entity_type_: The New Relic Entity type used for GraphQL entity search (APPLICATION | DASHBOARD | HOST | MONITOR | WORKLOAD)
 - _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source. 
-- _nr_entity_key.type_: How the value relates to the New Relic Entity. Currently this is only as an Entity attribute, but is to include Entity _tags_ as well. 
+- _nr_entity_key.type_: What type of Entity metadata will we use to reconcile the CI (attribute | tag). If _attribute_ is selected, the following _nr_entity_key.key_ value is limited to direct attributes of the Entity such as (name | accountId | guid). If _tag_ is selected the _nr_entity_key.key_ can be any value that matches a tag key possessed by the target Entity. 
 - _nr_entity_key.key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
 - _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match|exact_contains|caseless_contains).
 - _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
@@ -118,10 +118,17 @@ The service deployment options expect a parameter of either "server" or "single-
 - server: initializes the service as a web application and executes the synchronization process based on the ```"daily_sync_time": "3"``` configuration parameter.
 - single-run: executes the synchronization process immediately and terminates the application.
 
-
 ## Deployment
 
 ### Standalone service
+- Ensure [npm](https://www.npmjs.com/) and [node](https://nodejs.org/) are installed on your system
+- Download the .zip archive or clone the repo
+- From the root directory chmod ```install.sh``` and ```run.sh``` to be executable in your shell
+- Execute ```install.sh``` to install the dependent libraries
+- Edit the ./js/config.json file and add all needed values described in the config section of this readme
+- Edit the ./js/newrelic.js file to include your New Relic license key _(not a requirement but a best practice)_
+- Edit the ```run.sh``` pass the "server" parameter to the application, by default the service runs once
+- Execute the ```run.sh``` and sync some CI/Entity metadata! 
 
 ### Containerized service
 
