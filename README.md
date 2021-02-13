@@ -33,6 +33,7 @@ The ```config.json``` file that is used to configure the synchronization service
 "nrdb_insert_url": "https://insights-collector.newrelic.com/v1/accounts/#######/events",
 "nrdb_entitysync_event_name": "SNOW_ENTITY_SYNC",
 "nr_graph_api_key": "NRAK-###################",
+"nr_graph_api_account": "########",
 "daily_sync_time": "3",
 "express_port": "7373",
 "version": "3",
@@ -40,7 +41,8 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nrdb_insert_api_key_: The API key used to insert New Relic NRDB events.
 - _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written.
 - _nrdb_entitysync_event_name_: The event name for the entity sync housekeeping events.  
-- _nr_graph_api_key_: The API key used to query New Relic Entities via the [graph api](https://api.newrelic.com/graphiql?#query=) 
+- _nr_graph_api_key_: The API key used to query New Relic Entities via the [graph api](https://api.newrelic.com/graphiql?#query=)
+- _nr_graph_api_account_: The account number where entity sync events are being written. The graph api key must have access read from this account. 
 - _daily_sync_time_: The time of day GMT the synchronization process executes.
 - _express_port_: The port the service based deployment uses to communicate in http.
 - _version_: specifies the current version of this config document.
@@ -75,7 +77,7 @@ The ```config.json``` file that is used to configure the synchronization service
     "tags": [
         "sys_class_name",
         "sys_id",
-        "assignment_group"
+        "support_group.value"
     ],
     "nr_entity_domain": "APM",
     "nr_entity_type": "APPLICATION",
@@ -88,7 +90,7 @@ The ```config.json``` file that is used to configure the synchronization service
     "nr_entity_tag_key": {
         "sys_class_name": "SNOW_CI_CLASS",
         "sys_id": "SNOW_CMDB_CI",
-        "assignment_group": "SNOW_ASSIGN_GROUP"
+        "support_group.value": "SNOW_SUPPORT_GROUP"
     }
 }, ... ]
 ```
@@ -96,9 +98,9 @@ The ```config.json``` file that is used to configure the synchronization service
 - _type_: 
 - _key_: The value from the provider entry that will be used for the resolution strategy.
 - _api_: The api path.
-- _api_query_parms_: The API query string. 
+- _api_query_parms_: The API query string. The query parms string supports the substitution of ```${sys_updated_on}``` for use when passing the query param ```sys_updated_on>javascript:gs.dateGenerate(${sys_updated_on})``` when seeking to query CIs updated since the last run of the sync tool.
 - _api_method_: The http method (GET|POST)
-- _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity.
+- _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity. Tags support nested objects from the provider to one level of depth. Use dot notion like ```support_group.value``` to access the values of nested objects. 
 - _nr_entity_domain_: The New Relic Entity domain used for GraphQL entity search (APM | BROWSER | INFRA | SYNTH | MOBILE)
 - _nr_entity_type_: The New Relic Entity type used for GraphQL entity search (APPLICATION | DASHBOARD | HOST | MONITOR | WORKLOAD)
 - _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source. 
