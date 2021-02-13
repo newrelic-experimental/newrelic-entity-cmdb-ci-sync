@@ -18,6 +18,7 @@ async function cycleSync(_config) {
     var __total_entity_updates = 0;
     var __total_entity_duplicates = 0;
     var __total_entity_failures = 0;
+    var __auditEvent = null;
 
     //synchronization run reporting
     __reportingEvents.push({
@@ -60,18 +61,49 @@ async function cycleSync(_config) {
 
                             if (__entityUpdatePayload.found) {
                                 
-                                __entityUpdateResponse = await updateEntity(_config, __entityUpdatePayload);
+                                //record audit message of a reconciled CI/Entity pair
+                                __auditEvent = {};
+                                __auditEvent.eventType = _config.nrdb_entitysync_event_name;
+                                __auditEvent.action = "ci_processed";
+                                __auditEvent.version = _config.version;
+                                __auditEvent.found = __entityUpdatePayload.found;
+                                __auditEvent.entity_guid = __entityUpdatePayload.entity_guid;
+                                __auditEvent.entity_name = __entityUpdatePayload.name;
+                                __auditEvent.entity_update_allowed = _config.provider.update_entity;
+
+                                //add the new tags to the audit event
+                                for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
+                                    //console.log("tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
+                                    __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value; 
+                                } //for
                                 
-                                if (__entityUpdateResponse.message === "SUCCESS") {
-                                    __total_entity_updates++;
+
+
+                                if (_config.provider.update_entity === true) {
+                                    
+                                    __entityUpdateResponse = await updateEntity(_config, __entityUpdatePayload);
+                                    __auditEvent.entity_update_status = __entityUpdateResponse.message;
+
+                                    if (__entityUpdateResponse.message === "SUCCESS") {
+                                        __total_entity_updates++;    
+                                    } //if
+                                    else if (__entityUpdateResponse.message === "SKIPPED") {
+                                        __total_entity_duplicates++;
+                                    }
+                                    else { 
+                                        __total_entity_failures++;
+                                    } //else
+                                    console.log("Updating Entity: " + __entityUpdateResponse.name + " : " + __entityUpdateResponse.entity_guid + " --> " + __entityUpdateResponse.message);
+
                                 } //if
-                                else if (__entityUpdateResponse.message === "SKIPPED") {
-                                    __total_entity_duplicates++;
-                                }
-                                else { 
-                                    __total_entity_failures++;
+                                else {
+
+                                    __auditEvent.entity_update_status = "NO UPDATE ATTEMPT";
                                 } //else
-                                console.log("Updating Entity: " + __entityUpdateResponse.name + " : " + __entityUpdateResponse.entity_guid + " --> " + __entityUpdateResponse.message);
+
+                                __reportingEvents.push(__auditEvent);
+                                console.log("This is the audit event: ", __auditEvent);
+
                             } //if
                             else {
 

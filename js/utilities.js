@@ -23,6 +23,57 @@ async function getCIArray(_config, _ci_type) {
     return(__cis);
 } //getCIArray
 
+/* TODO this is ServiceNow specific and needs to be made generic - output based on parameter */
+async function _getLastUpdateTS(_config) {
+
+    const fetch = require('isomorphic-fetch');
+    var __response = null;
+    var __json_response = null;
+    var __lastUpdateTS = null;
+
+    try { 
+
+        __response = await fetch('https://api.newrelic.com/graphql', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'API-Key': _config.nr_graph_api_key
+            },
+            body: JSON.stringify({ 
+                query: `{
+                    actor {
+                      account(id: ${_config.nr_graph_api_account}) {
+                        nrql(query: "SELECT latest(timestamp) FROM ${_config.nrdb_entitysync_event_name} SINCE 1 MONTH AGO") {
+                          results
+                        }
+                      }
+                    }
+                }`,
+                variables: ''
+            }),
+        });
+
+        __json_response = await __response.json();
+
+        // returns suitably old date to query all records
+        if (__json_response.data.actor.account.nrql.results[0]["latest.timestamp"] === undefined) {            
+            __lastUpdateTS = `'1973-03-17'%2C'00%3A00%3A00'`;
+        } //if
+        else { 
+            var __date = new Date(Number(__json_response.data.actor.account.nrql.results[0]["latest.timestamp"]));
+            __lastUpdateTS = `'${__date.getUTCFullYear()}-${("0" + (__date.getUTCMonth() + 1)).slice(-2)}-${("0" + __date.getUTCDate()).slice(-2)}'%2C'${("0" +  __date.getUTCHours()).slice(-2)}%3A00%3A00'`;
+        } //else
+    } //try
+    catch(_err) {
+
+        console.log("[utilities:getLastUpdateTS] Problem getting timestamp for CMDB Sync from " + _config.nrdb_entitysync_event_name + " NRDB Table.");
+        console.error("[utilities::getLastUpdateTS]", _err);
+        __lastUpdateTS = `'1973-03-17'%2C'00%3A00%3A00'`;
+    } //catch
+
+    return(__lastUpdateTS);
+} //getLastUpdateTS
+
 async function getNREntities(_config, _entity_shape, _cursor) {
 
     const fetch = require('isomorphic-fetch');
@@ -95,20 +146,18 @@ async function getNREntities(_config, _entity_shape, _cursor) {
         console.error("[utilities::getNREntities]", _err);
     } //catch
 
-//    console.log("Entities returned", __json_response);
-//    console.log("---response --> " + JSON.stringify(__json_response));
     return(__json_response);
-
 } //getNREntities
 
 async function reconcileEntity(_ciType, _entity, _candidateCIs) { 
 
-//    console.log("Entity: ", _entity);
+   // console.log("Entity to reconcile: ", _entity);
     var __entityUpdatePayload = {
         found: false,
         entity_guid: _entity.guid,
         name: _entity.name,
-        tags: []
+        tags: [],
+        ci: null
     };
 
     var __entity_key = null;
@@ -124,10 +173,12 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         // we will use the Entity tag value to reconcile the candidate CI
         var __tags = _entity.tags.filter(tagset => tagset.key === _ciType.nr_entity_key.key);
 
-        if (__tags[0].values.length > 0) {
-            // in the case we have found arrays we will select the first array element
-            __entity_key = __tags[0].values[0]; 
-        } // if
+        if (__tags.length > 0) {
+            if (__tags[0].values.length > 0) {
+                // in the case we have found arrays we will select the first array element
+                __entity_key = __tags[0].values[0]; 
+            } // if
+        } //if
         else {
             console.error("[utilities:reconcileEntity] No tag value found for " + _ciType.nr_entity_key.key + " on entity " + _entity.name);
             return(__entityUpdatePayload);
@@ -147,9 +198,9 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         // select matching strategy
         if (_ciType.nr_entity_key.strategy === "caseless_match") {
 
-            //if (_candidateCIs[i].name.toUpperCase() === _entity.name.toUpperCase()) {
             if (_candidateCIs[i][_ciType.key].toUpperCase() === __entity_key.toUpperCase()) {
                 __entityUpdatePayload.found = true;
+                __entityUpdatePayload.ci = _candidateCIs[i];
                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
                 break;
             } //if
@@ -157,9 +208,9 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         } //if
         else if (_ciType.nr_entity_key.strategy === "exact_match") {
 
-            //if (_candidateCIs[i].name === _entity.name) {
             if (_candidateCIs[i][_ciType.key] === __entity_key) {
                 __entityUpdatePayload.found = true;
+                __entityUpdatePayload.ci = _candidateCIs[i];
                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
                 break;
             } //if
@@ -167,9 +218,9 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         } //else if
         else if (_ciType.nr_entity_key.strategy === "exact_contains") {
 
-            //if (_candidateCIs[i].name.includes(_entity.name)) {
             if (_candidateCIs[i][_ciType.key].includes(__entity_key)) {
                  __entityUpdatePayload.found = true;
+                 __entityUpdatePayload.ci = _candidateCIs[i];
                  __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
                  break;
              } //if
@@ -177,9 +228,9 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         } //else if
         else if (_ciType.nr_entity_key.strategy === "caseless_contains") {
 
-            //if (_candidateCIs[i].name.toUpperCase().includes(_entity.name.toUpperCase())) {
             if (_candidateCIs[i][_ciType.key].toUpperCase().includes(__entity_key.toUpperCase())) {
                  __entityUpdatePayload.found = true;
+                 __entityUpdatePayload.ci = _candidateCIs[i];
                  __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
                  break;
             } //if
@@ -193,7 +244,6 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
     } //for
 
     return(__entityUpdatePayload);
-
 } //reconcileEntity
 
 async function updateEntity(_config, _entityUpdate) {
@@ -257,23 +307,25 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
 
     var __entityTags = [];
     var __tagEvaluator = false;
+    var __ciTagValue = "";
 
     // loop the tag array defined in the ci configuration
     for (var i = 0; i < _ciType.tags.length; i++) {
     
-        __tagEvaluator = await _entityHasTagAndValue(_entity, _ciType.nr_entity_tag_key[_ciType.tags[i]], _ci[_ciType.tags[i]]);
+        __ciTagValue = await _getCIAttributeValue(_ci, _ciType.tags[i]);     
+        __tagEvaluator = await _entityHasTagAndValue(_entity, _ciType.nr_entity_tag_key[_ciType.tags[i]], __ciTagValue);
 
         if (!__tagEvaluator) {
 
             //check to see that we are not pushing a null string - api does not cotton to this.
-            if (_ci[_ciType.tags[i]] !== '') {
+            if (_ci[__ciTagValue] !== '') {
                 __entityTags.push({
                     key: _ciType.nr_entity_tag_key[_ciType.tags[i]],
-                    value: _ci[_ciType.tags[i]]
+                    value: __ciTagValue
                 });
             } //if
             else{
-                console.log("Attempting to update an Entity with a tag where there is no value, skipping. Tag: " + _ciType.nr_entity_tag_key[_ciType.tags[i]] + " --> " + _ci[_ciType.tags[i]]);
+                console.log("Attempting to update an Entity with a tag where there is no value, skipping. Tag: " + _ciType.nr_entity_tag_key[_ciType.tags[i]] + " --> " + _ciType.tags[i]);
             } //else
 
         } //if
@@ -282,9 +334,29 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
         } //else
 
     } //for
-    console.log("entity tags being added: ",  __entityTags);
+    // console.log("entity tags being added: ",  __entityTags);
     return (__entityTags);
 } // _formatAdditiveTags
+
+/**
+ * Retrieves the value of the defined tag from the candidate CI. Supports one level of nested object.
+ * @param {*} _ci 
+ * @param {*} _ciTypeTag 
+ */
+async function _getCIAttributeValue(_ci, _ciTypeTag) {
+
+    var __tagValue;
+
+    if (_ciTypeTag.includes(".")){ 
+        //TODO support more nesting
+        __tagValue = _ci[_ciTypeTag.slice(0, _ciTypeTag.indexOf("."))][_ciTypeTag.slice(_ciTypeTag.indexOf(".") + 1, _ciTypeTag.length)];
+    } //if
+    else {
+        __tagValue = _ci[_ciTypeTag];
+    } //else
+
+    return(__tagValue);
+} //_getCIAttributeValue
 
 async function _entityHasTagAndValue(_entity, _key, _value) {
 //console.log("The entity: ", _entity);
@@ -327,10 +399,24 @@ async function _getServiceNowCIs(_config, _ci_type) {
     var __cis = [];
     var __api_response = null;
     var __json_response = null;
+    var __request_url = null;
+    var __last_timestamp = null;
+    var __modified_query_parms = null;
     
     try { 
 
-        __api_response = await fetch(_config.provider.api_url + _ci_type.api + _ci_type.api_query_parms, {
+        if (_ci_type.api_query_parms.includes("${sys_updated_on}")) {
+
+            __last_timestamp = await _getLastUpdateTS(_config);
+            __modified_query_parms = _ci_type.api_query_parms.replace("${sys_updated_on}", __last_timestamp);
+        } //if
+        else {
+            __modified_query_parms = _ci_type.api_query_parms;
+        } //else
+
+        __request_url = _config.provider.api_url + _ci_type.api + __modified_query_parms;
+        //console.log("request url: " + __request_url);
+        __api_response = await fetch(__request_url, {
             method: _ci_type.api_method,
             headers: { 
                 'Accept': 'application/json',
@@ -341,6 +427,7 @@ async function _getServiceNowCIs(_config, _ci_type) {
 
         __json_response = await __api_response.json();
         __cis = __json_response.result;
+        //console.log("CIs:", __cis);
     } //try
     catch (_err) {
 
@@ -352,38 +439,37 @@ async function _getServiceNowCIs(_config, _ci_type) {
 
 async function transmitEvents(_config, _eventsArray) {
     console.log("Transmitting events ... ");
-        if (_eventsArray.length > 0) {
+    if (_eventsArray.length > 0) {
+
+        const fetch = require('isomorphic-fetch');
+
+        try {
+            const __response = await fetch(_config.nrdb_insert_url, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Insert-Key': _config.nrdb_insert_api_key
+                },
+                body: JSON.stringify(_eventsArray)
+            });
     
-            const fetch = require('isomorphic-fetch');
-    
-            try {
-                const __response = await fetch(_config.nrdb_insert_url, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Insert-Key': _config.nrdb_insert_api_key
-                    },
-                    body: JSON.stringify(_eventsArray)
-               });
-        
-               console.log(">> Event Transmit Result: " + __response.ok);
-            } //try
-            catch (_err) {
-                
-                console.log("APM: Failure transmitting events. ", _err);
-            } //catch
+            console.log(">> Event Transmit Result: " + __response.ok);
+        } //try
+        catch (_err) {
             
-        } //if
-        else {
-            console.log("No events to transmit")
-        } //else
-    
-    } //transmitEvents
+            console.log("APM: Failure transmitting events. ", _err);
+        } //catch
+        
+    } //if
+    else {
+        console.log("No events to transmit")
+    } //else
+} //transmitEvents
 
 module.exports = {
     getCIArray: getCIArray,
     getNREntities: getNREntities,
     reconcileEntity: reconcileEntity,
     updateEntity: updateEntity,
-    transmitEvents: transmitEvents
+    transmitEvents: transmitEvents    
 };

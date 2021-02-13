@@ -1,4 +1,4 @@
-require('newrelic');
+//require('newrelic');
 
 const cron = require("node-cron");
 const express = require("express");
