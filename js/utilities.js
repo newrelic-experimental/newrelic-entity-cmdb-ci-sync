@@ -27,31 +27,59 @@ async function getCIArray(_config, _ci_type) {
 async function _getLastUpdateTS(_config) {
 
     const fetch = require('isomorphic-fetch');
+    const HttpsProxyAgent = require('https-proxy-agent');
+    var __proxy_agent = null;
     var __response = null;
     var __json_response = null;
     var __lastUpdateTS = null;
 
     try { 
 
-        __response = await fetch('https://api.newrelic.com/graphql', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'API-Key': _config.nr_graph_api_key
-            },
-            body: JSON.stringify({ 
-                query: `{
-                    actor {
-                      account(id: ${_config.nr_graph_api_account}) {
-                        nrql(query: "SELECT latest(timestamp) FROM ${_config.nrdb_entitysync_event_name} SINCE 1 MONTH AGO") {
-                          results
+        if (_config.proxy.enabled) {
+           
+            __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
+            __response = await fetch('https://api.newrelic.com/graphql', {
+                method: 'POST',
+                agent: __proxy_agent,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'API-Key': _config.nr_graph_api_key
+                },
+                body: JSON.stringify({ 
+                    query: `{
+                        actor {
+                          account(id: ${_config.nr_graph_api_account}) {
+                            nrql(query: "SELECT latest(timestamp) FROM ${_config.nrdb_entitysync_event_name} SINCE 1 MONTH AGO") {
+                              results
+                            }
+                          }
                         }
-                      }
-                    }
-                }`,
-                variables: ''
-            }),
-        });
+                    }`,
+                    variables: ''
+                }),
+            });
+        } //if
+        else {
+            __response = await fetch('https://api.newrelic.com/graphql', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'API-Key': _config.nr_graph_api_key
+                },
+                body: JSON.stringify({ 
+                    query: `{
+                        actor {
+                          account(id: ${_config.nr_graph_api_account}) {
+                            nrql(query: "SELECT latest(timestamp) FROM ${_config.nrdb_entitysync_event_name} SINCE 1 MONTH AGO") {
+                              results
+                            }
+                          }
+                        }
+                    }`,
+                    variables: ''
+                }),
+            });
+        } //else
 
         __json_response = await __response.json();
 
@@ -77,8 +105,11 @@ async function _getLastUpdateTS(_config) {
 async function getNREntities(_config, _entity_shape, _cursor) {
 
     const fetch = require('isomorphic-fetch');
+    const HttpsProxyAgent = require('https-proxy-agent');
+    var __proxy_agent = null;
     var __query = ``;
     var __json_response = null;
+    var __response = null;
     
     if (_cursor === null) {
 
@@ -126,16 +157,35 @@ async function getNREntities(_config, _entity_shape, _cursor) {
 
     try { 
 
-        const __response = await fetch('https://api.newrelic.com/graphql', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'API-Key': _config.nr_graph_api_key
-            },
-            body: JSON.stringify({ 
-                query: __query,
-            variables: ''}),
-        });
+        if (_config.proxy.enabled) {
+           
+            __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
+            __response = await fetch('https://api.newrelic.com/graphql', {
+                method: 'POST',
+                agent: __proxy_agent,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'API-Key': _config.nr_graph_api_key
+                },
+                body: JSON.stringify({ 
+                    query: __query,
+                variables: ''}),
+            });
+
+        } //if
+        else {
+
+            __response = await fetch('https://api.newrelic.com/graphql', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'API-Key': _config.nr_graph_api_key
+                },
+                body: JSON.stringify({ 
+                    query: __query,
+                variables: ''}),
+            });
+        } //else
 
         __json_response = await __response.json();
 
@@ -248,14 +298,16 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
 
 async function updateEntity(_config, _entityUpdate) {
 
-
     const fetch = require('isomorphic-fetch');
+    const HttpsProxyAgent = require('https-proxy-agent');
+
     var __entityUpdateResponse = _entityUpdate;
     __entityUpdateResponse.message = "SUCCESS";
     var __mutation = null;
     var __apiResponse = null;
     var __responseJson = null;
-
+    var __proxy_agent = null;
+ 
     if (_entityUpdate.tags.length === 0) {
         
         __entityUpdateResponse.message = "SKIPPED";
@@ -274,17 +326,35 @@ async function updateEntity(_config, _entityUpdate) {
 
         try {
 
-            __apiResponse = await fetch('https://api.newrelic.com/graphql', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'API-Key': _config.nr_graph_api_key
-                },
-                body: JSON.stringify({ 
-                    query: __mutation,
-                    variables: ''}),
-                });
-    
+            if (_config.proxy.enabled) {
+
+                __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
+                __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+                    method: 'POST',
+                    agent: __proxy_agent,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'API-Key': _config.nr_graph_api_key
+                    },
+                    body: JSON.stringify({ 
+                        query: __mutation,
+                        variables: ''}),
+                    });
+            } //if
+            else {
+
+                __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'API-Key': _config.nr_graph_api_key
+                    },
+                    body: JSON.stringify({ 
+                        query: __mutation,
+                        variables: ''}),
+                    });
+            } //else
+
             __responseJson = await __apiResponse.json();
             console.log("Write response", __responseJson);
             console.log("Write response errz", __responseJson.data.taggingAddTagsToEntity.errors); //TODO adding - review context
@@ -364,30 +434,16 @@ async function _entityHasTagAndValue(_entity, _key, _value) {
 //console.log("The value: ", _value);
 
     var __rc = false;
-//console.log("______________________________________ recon loop");
-    for (var i = 0; i < _entity.tags.length; i++) {
-//
-//        console.log("entity tag: " + _entity.tags[i].key);
-//        console.log("propsoed key: " + _key);
-        //does this entity have the tag get 
-        if (_entity.tags[i].key === _key) {
 
-//            console.log("entity valueL: ", _entity.tags[i].values);
-//            console.log("proposed value: " + _value);
+    for (var i = 0; i < _entity.tags.length; i++) {
+
+        if (_entity.tags[i].key === _key) {
             //does this entity's tag value the same
             if (_entity.tags[i].values.includes(_value)) {
                 __rc = true;
-//                console.log("value matches!");
             } //if
-//            else {
-//                console.log("values does not match");
-//            } //else
         } //if
-//        else {
-//            console.log("no match");
-//        } //else
     } //for
-//console.log("______________________________________ recon loop");
 
     return(__rc);
 } //_entityHasTag
@@ -395,7 +451,9 @@ async function _entityHasTagAndValue(_entity, _key, _value) {
 async function _getServiceNowCIs(_config, _ci_type) {
 
     const fetch = require('isomorphic-fetch');
-    var base64 = require('base-64');
+    const base64 = require('base-64');
+    const HttpsProxyAgent = require('https-proxy-agent');
+    var __proxy_agent = null;
     var __cis = [];
     var __api_response = null;
     var __json_response = null;
@@ -416,14 +474,31 @@ async function _getServiceNowCIs(_config, _ci_type) {
 
         __request_url = _config.provider.api_url + _ci_type.api + __modified_query_parms;
         //console.log("request url: " + __request_url);
-        __api_response = await fetch(__request_url, {
-            method: _ci_type.api_method,
-            headers: { 
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
-            }
-        });
+
+        if (_config.proxy.enabled) {
+           
+            __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
+            __api_response = await fetch(__request_url, {
+                method: _ci_type.api_method,
+                agent: __proxy_agent,
+                headers: { 
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
+                }
+            });
+        } //if
+        else {
+
+            __api_response = await fetch(__request_url, {
+                method: _ci_type.api_method,
+                headers: { 
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
+                }
+            });
+        } //else
 
         __json_response = await __api_response.json();
         __cis = __json_response.result;
@@ -442,17 +517,36 @@ async function transmitEvents(_config, _eventsArray) {
     if (_eventsArray.length > 0) {
 
         const fetch = require('isomorphic-fetch');
+        const HttpsProxyAgent = require('https-proxy-agent');
+        var __proxy_agent = null;
+        var __response = null;
 
         try {
-            const __response = await fetch(_config.nrdb_insert_url, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-Insert-Key': _config.nrdb_insert_api_key
-                },
-                body: JSON.stringify(_eventsArray)
-            });
-    
+            
+            if (_config.proxy.enabled) {
+
+                __response = await fetch(_config.nrdb_insert_url, {
+                    method: 'POST',
+                    agent: __proxy_agent,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Insert-Key': _config.nrdb_insert_api_key
+                    },
+                    body: JSON.stringify(_eventsArray)
+                });
+
+            } //if
+            else {
+                __response = await fetch(_config.nrdb_insert_url, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Insert-Key': _config.nrdb_insert_api_key
+                    },
+                    body: JSON.stringify(_eventsArray)
+                });
+            } //else
+
             console.log(">> Event Transmit Result: " + __response.ok);
         } //try
         catch (_err) {
