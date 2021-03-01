@@ -36,7 +36,8 @@ The ```config.json``` file that is used to configure the synchronization service
 "nr_graph_api_account": "########",
 "daily_sync_time": "3",
 "express_port": "7373",
-"version": "3",
+"encrypted_config": false,
+"version": "4",
 ```
 - _nrdb_insert_api_key_: The API key used to insert New Relic NRDB events.
 - _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written.
@@ -45,6 +46,7 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nr_graph_api_account_: The account number where entity sync events are being written. The graph api key must have access read from this account. 
 - _daily_sync_time_: The time of day GMT the synchronization process executes.
 - _express_port_: The port the service based deployment uses to communicate in http.
+- _encrypted_config_: (true|false) Whether the config file includes encrypted values.
 - _version_: specifies the current version of this config document.
   
 **Provider Object**
@@ -64,6 +66,17 @@ The ```config.json``` file that is used to configure the synchronization service
 - _api_key_: The api token or key used for api calls (where applicable). 
 - _api_uname_: The username for API access (where applicable). 
 - _api_pword_: The password for API access (where applicable).
+
+**Proxy Object**
+```javascript
+"proxy": {
+    "enabled": false,
+    "address": "http://192.168.99.100:8080"
+}
+```
+- _proxy_: The encapsulating object for the proxy/network settings.
+- _enabled_: (true|false) 
+- _address_: The full address to the proxy, including port and basic auth if needed. 
 
 **CI Types Array**
 
@@ -110,6 +123,23 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
 - _nr_entity_tag_key_: The New Relic Entity key value (name) for the _provider_ attribute value.
 
+### Config file encryption
+
+To encrypt sensitive fields in the config.json, execute the following proceedure:
+- Create your config.json with all values in clear text
+- From the commandline run ```node ./js/index.js encrypt <my_awesome_passphrase>```
+- The command above will set ```encrypted_config: true``` use the passphrase for a one way AES encruption of the following config values:
+  - ```provider.api_key```
+  - ```provider.api_uname```
+  - ```provider.api_pword```
+  - ```nrdb_insert_api_key```
+  - ```nrdb_insert_url```
+  - ```nr_graph_api_key```
+  - ```nr_graph_api_account```
+  - ```proxy.address```
+- The file will be written as ```enc.config.json``` in the config directory of the utility. (note: encryption is unrecoverable, a passphrase will be needed to run the service using the encrypted config.json)
+- When invoking the utility subsequently accompany the commandline option with the passphase for the encrypted config (e.g. ```node ./js/index.js single-run <my_awesome_passphrase>```)
+
 ### ServiceNow specific config
 
 Please see CI Types and Provider section for details.
@@ -130,13 +160,12 @@ The service deployment options expect a parameter of either "server" or "single-
 - Edit the ./js/config.json file and add all needed values described in the config section of this readme
 - Edit the ./js/newrelic.js file to include your New Relic license key _(not a requirement but a best practice)_
 - Edit the ```run.sh``` pass the "server" parameter to the application, by default the service runs once
-- Execute the ```run.sh``` and sync some CI/Entity metadata! 
+- Execute the ```run.sh``` and sync some CI/Entity metadata!
+* NOTE: Invoking the runtime with the script is not the preferred method for an encrypted config invocation, as the passphrase needs to be passed to the runtime in invocation.   
 
 ### Containerized service
 
 ### Serverless function
-
-### New Relic Synthetic
 
 ## Operation
 

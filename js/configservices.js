@@ -14,7 +14,6 @@ async function encryptConfig(_config, _passphrase) {
 
     // encrypt common config options
     _config.nrdb_insert_api_key = await __encrypt(_config.nrdb_insert_api_key, _passphrase);
-    _config.nrdb_insert_api_key = await __encrypt(_config.nrdb_insert_api_key, _passphrase);
     _config.nrdb_insert_url = await __encrypt(_config.nrdb_insert_url, _passphrase);
     _config.nr_graph_api_key = await __encrypt(_config.nr_graph_api_key, _passphrase);
     _config.nr_graph_api_account = await __encrypt(_config.nr_graph_api_account, _passphrase);
