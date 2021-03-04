@@ -5,6 +5,7 @@
             "key": "name",
             "api": "/api/now/table/cmdb_ci_appl",
             "api_query_parms": "?sysparm_query=sys_updated_on>javascript:gs.dateGenerate(${sys_updated_on})^operational_status!=2^install_status!=7^sys_class_name=cmdb_ci_appl&sysparm_fields=sys_id%2Cname%2Cowned_by%2Csupport_group",
+            "api_page_size": 10000,
             "api_method": "GET",
             "tags": [
                 "sys_class_name",
@@ -32,6 +33,7 @@
             "key": "name",
             "api": "/api/now/table/cmdb_ci_server",
             "api_query_parms": "?sysparm_fields=host_name%2Cip_address%2Csys_tags%2Cos%2Ccomments%2Csys_id%2Cinstall_status%2Casset_tag%2Ccorrelation_id%2Cname%2Cfqdn%2Ccpu_name%2Csys_class_name%2Cassignment_group",
+            "api_page_size": 10000,
             "api_method": "GET",
             "tags": [
                 "sys_class_name",
@@ -57,6 +59,7 @@
             "key": "name",
             "api": "/api/now/table/cmdb_ci_app_server_tomcat",
             "api_query_parms": "?sysparm_fields=software_install%2Cmac_address%2Cowned_by%2Cattributes%2Ccorrelation_id%2Ccost_center%2Cu_recovery_plan_name%2Csys_id%2Csys_tags%2Csys_class_name%2Cname%2Csupported_by%2Csubcategory%2Cassignment_group%2Ccategory%2Cip_address%2Casset_tag%2Crunning_process%2Crunning_process_key_parameters%2Crp_command_hash",
+            "api_page_size": 10000,
             "api_method": "GET",
             "tags": [
                 "sys_class_name",
@@ -75,7 +78,7 @@
                 "sys_class_name": "SNOW_CI_CLASS",
                 "sys_id": "SNOW_CMDB_CI",
                 "assignment_group": "SNOW_ASSIGN_GROUP"
-            } 
+            }
         }
     ],
     "provider" : {

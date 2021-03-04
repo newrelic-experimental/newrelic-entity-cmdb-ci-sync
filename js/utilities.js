@@ -5,7 +5,7 @@ async function getCIArray(_config, _ci_type) {
     try {
 
         if (_config.provider.type === "servicenow") {
-                    
+
             __cis = await _getServiceNowCIs(_config, _ci_type);
         } //if
         else {
@@ -33,19 +33,19 @@ async function _getLastUpdateTS(_config) {
     var __json_response = null;
     var __lastUpdateTS = null;
 
-    try { 
+    try {
 
         if (_config.proxy.enabled) {
-           
+
             __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
             __response = await fetch('https://api.newrelic.com/graphql', {
                 method: 'POST',
                 agent: __proxy_agent,
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'API-Key': _config.nr_graph_api_key
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     query: `{
                         actor {
                           account(id: ${_config.nr_graph_api_account}) {
@@ -62,11 +62,11 @@ async function _getLastUpdateTS(_config) {
         else {
             __response = await fetch('https://api.newrelic.com/graphql', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'API-Key': _config.nr_graph_api_key
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     query: `{
                         actor {
                           account(id: ${_config.nr_graph_api_account}) {
@@ -84,10 +84,10 @@ async function _getLastUpdateTS(_config) {
         __json_response = await __response.json();
 
         // returns suitably old date to query all records
-        if (__json_response.data.actor.account.nrql.results[0]["latest.timestamp"] === undefined) {            
+        if (__json_response.data.actor.account.nrql.results[0]["latest.timestamp"] === undefined) {
             __lastUpdateTS = `'1973-03-17'%2C'00%3A00%3A00'`;
         } //if
-        else { 
+        else {
             var __date = new Date(Number(__json_response.data.actor.account.nrql.results[0]["latest.timestamp"]));
             __lastUpdateTS = `'${__date.getUTCFullYear()}-${("0" + (__date.getUTCMonth() + 1)).slice(-2)}-${("0" + __date.getUTCDate()).slice(-2)}'%2C'${("0" +  __date.getUTCHours()).slice(-2)}%3A00%3A00'`;
         } //else
@@ -110,7 +110,7 @@ async function getNREntities(_config, _entity_shape, _cursor) {
     var __query = ``;
     var __json_response = null;
     var __response = null;
-    
+
     if (_cursor === null) {
 
         __query = `{
@@ -153,21 +153,21 @@ async function getNREntities(_config, _entity_shape, _cursor) {
               }
             }
           }`;
-    } //else 
+    } //else
 
-    try { 
+    try {
 
         if (_config.proxy.enabled) {
-           
+
             __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
             __response = await fetch('https://api.newrelic.com/graphql', {
                 method: 'POST',
                 agent: __proxy_agent,
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'API-Key': _config.nr_graph_api_key
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     query: __query,
                 variables: ''}),
             });
@@ -177,11 +177,11 @@ async function getNREntities(_config, _entity_shape, _cursor) {
 
             __response = await fetch('https://api.newrelic.com/graphql', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'API-Key': _config.nr_graph_api_key
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     query: __query,
                 variables: ''}),
             });
@@ -199,7 +199,7 @@ async function getNREntities(_config, _entity_shape, _cursor) {
     return(__json_response);
 } //getNREntities
 
-async function reconcileEntity(_ciType, _entity, _candidateCIs) { 
+async function reconcileEntity(_ciType, _entity, _candidateCIs) {
 
    // console.log("Entity to reconcile: ", _entity);
     var __entityUpdatePayload = {
@@ -226,7 +226,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         if (__tags.length > 0) {
             if (__tags[0].values.length > 0) {
                 // in the case we have found arrays we will select the first array element
-                __entity_key = __tags[0].values[0]; 
+                __entity_key = __tags[0].values[0];
             } // if
         } //if
         else {
@@ -307,15 +307,15 @@ async function updateEntity(_config, _entityUpdate) {
     var __apiResponse = null;
     var __responseJson = null;
     var __proxy_agent = null;
- 
+
     if (_entityUpdate.tags.length === 0) {
-        
+
         __entityUpdateResponse.message = "SKIPPED";
     } //if
 
     for (var i = 0; i < _entityUpdate.tags.length; i++) {
 
-        __mutation = `mutation { 
+        __mutation = `mutation {
             taggingAddTagsToEntity(guid: "${_entityUpdate.entity_guid}", tags: {key: "${_entityUpdate.tags[i].key}", values: ["${_entityUpdate.tags[i].value}"]}) {
                 errors {
                     message
@@ -332,11 +332,11 @@ async function updateEntity(_config, _entityUpdate) {
                 __apiResponse = await fetch('https://api.newrelic.com/graphql', {
                     method: 'POST',
                     agent: __proxy_agent,
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'API-Key': _config.nr_graph_api_key
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         query: __mutation,
                         variables: ''}),
                     });
@@ -345,11 +345,11 @@ async function updateEntity(_config, _entityUpdate) {
 
                 __apiResponse = await fetch('https://api.newrelic.com/graphql', {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'API-Key': _config.nr_graph_api_key
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         query: __mutation,
                         variables: ''}),
                     });
@@ -358,10 +358,10 @@ async function updateEntity(_config, _entityUpdate) {
             __responseJson = await __apiResponse.json();
             console.log("Write response", __responseJson);
             console.log("Write response errz", __responseJson.data.taggingAddTagsToEntity.errors); //TODO adding - review context
-            
+
         } //try
-        catch(_err) { 
-    
+        catch(_err) {
+
             console.log("Problem writing tag for entity: " + _entityUpdate.name + " trying to write " + _entityUpdate.tags[i].key + " : " + _entityUpdate.tags[i].value);
             console.error("[utilities::updateEntity]", _err);
             __entityUpdateResponse.message = "FAILURE: " + _err;
@@ -381,8 +381,8 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
 
     // loop the tag array defined in the ci configuration
     for (var i = 0; i < _ciType.tags.length; i++) {
-    
-        __ciTagValue = await _getCIAttributeValue(_ci, _ciType.tags[i]);     
+
+        __ciTagValue = await _getCIAttributeValue(_ci, _ciType.tags[i]);
         __tagEvaluator = await _entityHasTagAndValue(_entity, _ciType.nr_entity_tag_key[_ciType.tags[i]], __ciTagValue);
 
         if (!__tagEvaluator) {
@@ -410,14 +410,14 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
 
 /**
  * Retrieves the value of the defined tag from the candidate CI. Supports one level of nested object.
- * @param {*} _ci 
- * @param {*} _ciTypeTag 
+ * @param {*} _ci
+ * @param {*} _ciTypeTag
  */
 async function _getCIAttributeValue(_ci, _ciTypeTag) {
 
     var __tagValue;
 
-    if (_ciTypeTag.includes(".")){ 
+    if (_ciTypeTag.includes(".")){
         //TODO support more nesting
         __tagValue = _ci[_ciTypeTag.slice(0, _ciTypeTag.indexOf("."))][_ciTypeTag.slice(_ciTypeTag.indexOf(".") + 1, _ciTypeTag.length)];
     } //if
@@ -460,8 +460,12 @@ async function _getServiceNowCIs(_config, _ci_type) {
     var __request_url = null;
     var __last_timestamp = null;
     var __modified_query_parms = null;
-    
-    try { 
+    var __limit = _ci_type.api_page_size;
+    var __limitParm = null;
+    var __offset = 0;
+    var __offsetParm = null;
+
+    try {
 
         if (_ci_type.api_query_parms.includes("${sys_updated_on}")) {
 
@@ -472,16 +476,18 @@ async function _getServiceNowCIs(_config, _ci_type) {
             __modified_query_parms = _ci_type.api_query_parms;
         } //else
 
-        __request_url = _config.provider.api_url + _ci_type.api + __modified_query_parms;
+        __limitParm = "&sysparm_limit=" + _ci_type.api_page_size;
+        __offsetParm = "&sysparm_offset=" + __offset;
+        __request_url = _config.provider.api_url + _ci_type.api + __modified_query_parms + __limitParm + __offsetParm;
         //console.log("request url: " + __request_url);
 
         if (_config.proxy.enabled) {
-           
+
             __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
             __api_response = await fetch(__request_url, {
                 method: _ci_type.api_method,
                 agent: __proxy_agent,
-                headers: { 
+                headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                     'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
@@ -492,7 +498,7 @@ async function _getServiceNowCIs(_config, _ci_type) {
 
             __api_response = await fetch(__request_url, {
                 method: _ci_type.api_method,
-                headers: { 
+                headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                     'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
@@ -502,13 +508,52 @@ async function _getServiceNowCIs(_config, _ci_type) {
 
         __json_response = await __api_response.json();
         __cis = __json_response.result;
+        var totalRecords = await __api_response.headers.get('X-Total-Count');
         //console.log("CIs:", __cis);
+
+        if (totalRecords > __limit) {
+          do {
+            __offset = __offset + __limit;
+            __offsetParm = "&sysparm_offset=" + __offset;
+            __request_url = _config.provider.api_url + _ci_type.api + __modified_query_parms + __limitParm + __offsetParm;
+
+            if (__offset > totalRecords) {
+              break;
+            }
+
+            if (_config.proxy.enabled) {
+
+                __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
+                __api_response = await fetch(__request_url, {
+                    method: _ci_type.api_method,
+                    agent: __proxy_agent,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
+                    }
+                });
+            } //if
+            else {
+                __api_response = await fetch(__request_url, {
+                    method: _ci_type.api_method,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic '+ base64.encode(_config.provider.api_uname+':'+_config.provider.api_pword)
+                    }
+                });
+            } //else
+            __json_response = await __api_response.json();
+            __cis = __cis.concat(__json_response.result);
+          } while (__offset < totalRecords) //do-while
+        } //if
     } //try
     catch (_err) {
 
         console.error("[utilities::_getServiceNowCIs] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
     } //catch
-
+    // console.log("allCIs" + __cis);
     return(__cis);
 } //_getServiceNowCIs
 
@@ -522,13 +567,13 @@ async function transmitEvents(_config, _eventsArray) {
         var __response = null;
 
         try {
-            
+
             if (_config.proxy.enabled) {
 
                 __response = await fetch(_config.nrdb_insert_url, {
                     method: 'POST',
                     agent: __proxy_agent,
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'X-Insert-Key': _config.nrdb_insert_api_key
                     },
@@ -539,7 +584,7 @@ async function transmitEvents(_config, _eventsArray) {
             else {
                 __response = await fetch(_config.nrdb_insert_url, {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'X-Insert-Key': _config.nrdb_insert_api_key
                     },
@@ -550,10 +595,10 @@ async function transmitEvents(_config, _eventsArray) {
             console.log(">> Event Transmit Result: " + __response.ok);
         } //try
         catch (_err) {
-            
+
             console.log("APM: Failure transmitting events. ", _err);
         } //catch
-        
+
     } //if
     else {
         console.log("No events to transmit")
@@ -565,5 +610,5 @@ module.exports = {
     getNREntities: getNREntities,
     reconcileEntity: reconcileEntity,
     updateEntity: updateEntity,
-    transmitEvents: transmitEvents    
+    transmitEvents: transmitEvents
 };

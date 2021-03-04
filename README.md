@@ -2,13 +2,13 @@
 
 # New Relic Entity CMDB CI Sync
 
-This project provides a set of opinionated mechanisms to synchronize Entity tags in New Relic with other sources of entity metadata. While initially conceived to synchronize CI attributes from ServiceNow CMDB, the scripts are intended to be modularized to provide metadata synchronization with other systems of record. 
+This project provides a set of opinionated mechanisms to synchronize Entity tags in New Relic with other sources of entity metadata. While initially conceived to synchronize CI attributes from ServiceNow CMDB, the scripts are intended to be modularized to provide metadata synchronization with other systems of record.
 
 ## How does it work?
 
 The synchronization process works as follows:
-- The process configuration provides a link between a set of _provider_ entries and a set of New Relic Entities. 
-- The process loops over the New Relic Entity Set and attempts to resolve the current entity with a match from the _provider_ using a predefined matching strategy. 
+- The process configuration provides a link between a set of _provider_ entries and a set of New Relic Entities.
+- The process loops over the New Relic Entity Set and attempts to resolve the current entity with a match from the _provider_ using a predefined matching strategy.
 - If a match is discovered the attributes denoted in the configuration for the provider are applied to the New Relic Entity as tags (key and value).  
 
 ## How is it deployed?
@@ -21,7 +21,7 @@ At present the process is deployed as a standalone service. It is the intention 
 
 ## Configuration
 
-Configuration of the service is limited to command line parameters and the comprehensive config file. Options for both sources are outlined below. 
+Configuration of the service is limited to command line parameters and the comprehensive config file. Options for both sources are outlined below.
 
 ### Config file format
 The ```config.json``` file that is used to configure the synchronization service is divided into 3 main sections (ci_types array, provider object, and core configuration parameters).
@@ -43,15 +43,15 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written.
 - _nrdb_entitysync_event_name_: The event name for the entity sync housekeeping events.  
 - _nr_graph_api_key_: The API key used to query New Relic Entities via the [graph api](https://api.newrelic.com/graphiql?#query=)
-- _nr_graph_api_account_: The account number where entity sync events are being written. The graph api key must have access read from this account. 
+- _nr_graph_api_account_: The account number where entity sync events are being written. The graph api key must have access read from this account.
 - _daily_sync_time_: The time of day GMT the synchronization process executes.
 - _express_port_: The port the service based deployment uses to communicate in http.
 - _encrypted_config_: (true|false) Whether the config file includes encrypted values.
 - _version_: specifies the current version of this config document.
-  
+
 **Provider Object**
 
-```javascript 
+```javascript
 "provider" : {
     "type": "servicenow",
     "api_url": "https://###########.service-now.com/",
@@ -63,8 +63,8 @@ The ```config.json``` file that is used to configure the synchronization service
 - _provider_: The encapsulating object for provider information (i.e. where this services goes to get the prospective Entity information).
 - _type_: Used to determine the access and conditional formatting logic for the provider calls. Possible options include (servicenow,)
 - _api_url_: The root api url of the provider.
-- _api_key_: The api token or key used for api calls (where applicable). 
-- _api_uname_: The username for API access (where applicable). 
+- _api_key_: The api token or key used for api calls (where applicable).
+- _api_uname_: The username for API access (where applicable).
 - _api_pword_: The password for API access (where applicable).
 
 **Proxy Object**
@@ -75,12 +75,12 @@ The ```config.json``` file that is used to configure the synchronization service
 }
 ```
 - _proxy_: The encapsulating object for the proxy/network settings.
-- _enabled_: (true|false) 
-- _address_: The full address to the proxy, including port and basic auth if needed. 
+- _enabled_: (true|false)
+- _address_: The full address to the proxy, including port and basic auth if needed.
 
 **CI Types Array**
 
-```javascript 
+```javascript
 "ci_types": [{
     "type": "cmdb_ci_app_server",
     "key": "name",
@@ -107,17 +107,18 @@ The ```config.json``` file that is used to configure the synchronization service
     }
 }, ... ]
 ```
-- _ci_types_: An array of ci_type objects. These objects define the details of the API calls to the provider system, and match those details to a New Relic Entity Search API call. 
-- _type_: 
+- _ci_types_: An array of ci_type objects. These objects define the details of the API calls to the provider system, and match those details to a New Relic Entity Search API call.
+- _type_:
 - _key_: The value from the provider entry that will be used for the resolution strategy.
 - _api_: The api path.
 - _api_query_parms_: The API query string. The query parms string supports the substitution of ```${sys_updated_on}``` for use when passing the query param ```sys_updated_on>javascript:gs.dateGenerate(${sys_updated_on})``` when seeking to query CIs updated since the last run of the sync tool.
+- _api_page_size_: The sysparm_limit and sysparm_offset values used during collection of CIs. For example, if set to 5 and there are 20 CIs to return, there will be 4 separate pages retrieved from CMDB (0-5, 5-10, 10-15, 15-20). Defaults to 10,000.
 - _api_method_: The http method (GET|POST)
-- _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity. Tags support nested objects from the provider to one level of depth. Use dot notion like ```support_group.value``` to access the values of nested objects. 
+- _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity. Tags support nested objects from the provider to one level of depth. Use dot notion like ```support_group.value``` to access the values of nested objects.
 - _nr_entity_domain_: The New Relic Entity domain used for GraphQL entity search (APM | BROWSER | INFRA | SYNTH | MOBILE)
 - _nr_entity_type_: The New Relic Entity type used for GraphQL entity search (APPLICATION | DASHBOARD | HOST | MONITOR | WORKLOAD)
-- _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source. 
-- _nr_entity_key.type_: What type of Entity metadata will we use to reconcile the CI (attribute | tag). If _attribute_ is selected, the following _nr_entity_key.key_ value is limited to direct attributes of the Entity such as (name | accountId | guid). If _tag_ is selected the _nr_entity_key.key_ can be any value that matches a tag key possessed by the target Entity. 
+- _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source.
+- _nr_entity_key.type_: What type of Entity metadata will we use to reconcile the CI (attribute | tag). If _attribute_ is selected, the following _nr_entity_key.key_ value is limited to direct attributes of the Entity such as (name | accountId | guid). If _tag_ is selected the _nr_entity_key.key_ can be any value that matches a tag key possessed by the target Entity.
 - _nr_entity_key.key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
 - _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match|exact_contains|caseless_contains).
 - _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
@@ -138,6 +139,7 @@ To encrypt sensitive fields in the config.json, execute the following proceedure
   - ```nr_graph_api_account```
   - ```proxy.address```
 - The file will be written as ```enc.config.json``` in the config directory of the utility. (note: encryption is unrecoverable, a passphrase will be needed to run the service using the encrypted config.json)
+- This new file with encrypted values needs to be moved / copied into ```config.json```
 - When invoking the utility subsequently accompany the commandline option with the passphase for the encrypted config (e.g. ```node ./js/index.js single-run <my_awesome_passphrase>```)
 
 ### ServiceNow specific config
@@ -146,7 +148,7 @@ Please see CI Types and Provider section for details.
 
 ### Command line parameters
 
-The service deployment options expect a parameter of either "server" or "single-run" as the main runtime entry. 
+The service deployment options expect a parameter of either "server" or "single-run" as the main runtime entry.
 - server: initializes the service as a web application and executes the synchronization process based on the ```"daily_sync_time": "3"``` configuration parameter.
 - single-run: executes the synchronization process immediately and terminates the application.
 
@@ -194,4 +196,3 @@ If you believe you have found a security vulnerability in this project or any of
 ## License
 
 newrelic-entity-cmdb-ci-sync is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
-
