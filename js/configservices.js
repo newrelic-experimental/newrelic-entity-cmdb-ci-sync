@@ -47,7 +47,6 @@ async function decryptConfig(_config, _passphrase) {
 
     // decrypt common config options
     _config.nrdb_insert_api_key = await __decrypt(_config.nrdb_insert_api_key, _passphrase);
-    _config.nrdb_insert_api_key = await __decrypt(_config.nrdb_insert_api_key, _passphrase);
     _config.nrdb_insert_url = await __decrypt(_config.nrdb_insert_url, _passphrase);
     _config.nr_graph_api_key = await __decrypt(_config.nr_graph_api_key, _passphrase);
     _config.nr_graph_api_account = await __decrypt(_config.nr_graph_api_account, _passphrase);
