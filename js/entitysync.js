@@ -1,7 +1,7 @@
 // this script contains everything we need to execute a apm lookup given the config appId/vsads
 async function cycleSync(_config) {
 
-    // SETUP CYCLE CONTEXT 
+    // SETUP CYCLE CONTEXT
     var getCIArray = require("./utilities").getCIArray;
     var getNREntities = require("./utilities").getNREntities;
     var reconcileEntity = require("./utilities").reconcileEntity;
@@ -15,6 +15,7 @@ async function cycleSync(_config) {
     var __entityUpdateResponse = null;
     var __reportingEvents = [];
     var __total_entities_processes = 0;
+    var __total_cis_returned = 0;
     var __total_entity_updates = 0;
     var __total_entity_duplicates = 0;
     var __total_entity_failures = 0;
@@ -35,7 +36,9 @@ async function cycleSync(_config) {
         console.log("Running Sync for type: " + _config.ci_types[i].type);
         __cis = await getCIArray(_config, _config.ci_types[i]);
         console.log("CIs returned: " + __cis.length);
-        
+        __total_cis_returned = __cis.length;
+
+
        //synchronization run reporting
         __reportingEvents.push({
             "eventType": _config.nrdb_entitysync_event_name,
@@ -45,14 +48,14 @@ async function cycleSync(_config) {
         });
 
         while(__followCursor) {
-            
-            try { 
-                
+
+            try {
+
                 __nrResponseJson = await getNREntities(_config, _config.ci_types[i], __cursorId);
 
-                if (__nrResponseJson !== null && __nrResponseJson.data.actor.entitySearch !== null) { 
+                if (__nrResponseJson !== null && __nrResponseJson.data.actor.entitySearch !== null) {
 
-                    if (__nrResponseJson.data.actor.entitySearch.results.entities !== undefined) { 
+                    if (__nrResponseJson.data.actor.entitySearch.results.entities !== undefined) {
 
                         for (var j = 0; j < __nrResponseJson.data.actor.entitySearch.results.entities.length; j++) {
 
@@ -60,7 +63,7 @@ async function cycleSync(_config) {
                             __entityUpdatePayload = await reconcileEntity(_config.ci_types[i], __nrResponseJson.data.actor.entitySearch.results.entities[j], __cis);
 
                             if (__entityUpdatePayload.found) {
-                                
+
                                 //record audit message of a reconciled CI/Entity pair
                                 __auditEvent = {};
                                 __auditEvent.eventType = _config.nrdb_entitysync_event_name;
@@ -74,23 +77,22 @@ async function cycleSync(_config) {
                                 //add the new tags to the audit event
                                 for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
                                     //console.log("tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
-                                    __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value; 
+                                    __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value;
                                 } //for
-                                
 
 
                                 if (_config.provider.update_entity === true) {
-                                    
+
                                     __entityUpdateResponse = await updateEntity(_config, __entityUpdatePayload);
                                     __auditEvent.entity_update_status = __entityUpdateResponse.message;
 
                                     if (__entityUpdateResponse.message === "SUCCESS") {
-                                        __total_entity_updates++;    
+                                        __total_entity_updates++;
                                     } //if
                                     else if (__entityUpdateResponse.message === "SKIPPED") {
                                         __total_entity_duplicates++;
                                     }
-                                    else { 
+                                    else {
                                         __total_entity_failures++;
                                     } //else
                                     console.log("Updating Entity: " + __entityUpdateResponse.name + " : " + __entityUpdateResponse.entity_guid + " --> " + __entityUpdateResponse.message);
@@ -115,7 +117,7 @@ async function cycleSync(_config) {
 
                         console.error("Undefined entities returned from search: ", __nrResponseJson);
                         throw 'Undefined entities following entitySearch';
-                    } //else 
+                    } //else
 
                 } //if
                 else {
@@ -151,6 +153,7 @@ async function cycleSync(_config) {
         "action": "entity_complete",
         "version": _config.version,
         "total_entities_processed": __total_entities_processes,
+        "total_cis_returned": __total_cis_returned,
         "total_entities_update_success": __total_entity_updates,
         "total_entities_update_failure": __total_entity_failures,
         "total_entities_update_skipped": __total_entity_duplicates
