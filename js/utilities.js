@@ -89,7 +89,8 @@ async function _getLastUpdateTS(_config) {
         } //if
         else {
             var __date = new Date(Number(__json_response.data.actor.account.nrql.results[0]["latest.timestamp"]));
-            __lastUpdateTS = `'${__date.getUTCFullYear()}-${("0" + (__date.getUTCMonth() + 1)).slice(-2)}-${("0" + __date.getUTCDate()).slice(-2)}'%2C'${("0" +  __date.getUTCHours()).slice(-2)}%3A00%3A00'`;
+            __lastUpdateTS = `'${__date.getFullYear()}-${("0" + (__date.getMonth() + 1)).slice(-2)}-${("0" + __date.getDate()).slice(-2)}'%2C'${("0" +  __date.getHours()).slice(-2)}%3A00%3A00'`;
+            console.log("Last updated timestamp is: " + __lastUpdateTS);
         } //else
     } //try
     catch(_err) {
