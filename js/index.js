@@ -24,7 +24,7 @@ startup(args, config_file).then(_start =>{
     });
 
     // start http listener
-    app.listen(config.express_port);
+    app.listen(_start.config.express_port);
   } //if
   else if (_start.type === "single-run") {
 
