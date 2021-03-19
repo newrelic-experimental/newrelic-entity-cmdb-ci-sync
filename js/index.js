@@ -12,14 +12,17 @@ startup(args, config_file).then(_start =>{
 
   if (_start.type === "server") {
 
-    app.get('/', (req, res) => res.send('CMDB ENTITY SYNC'));
+    app.get('/', (req, res) => {
+      _start.logger.info(JSON.stringify(req));
+      res.send('CMDB ENTITY SYNC');
+    });
 
     // execute the daily run of the entity sync for each entity type/domain
     cron.schedule("0 " +  _start.config.daily_sync_time + " * * *", function() {
 
-        console.log("Running cron cycle");
-        cycleSync(_start.config).then(_result => {
-          console.log(_result)
+        _start.logger.info("Running cron cycle");
+        cycleSync(_start.config, _start.logger).then(_result => {
+          _start.logger.info(_result)
         });
     });
 
@@ -28,23 +31,24 @@ startup(args, config_file).then(_start =>{
   } //if
   else if (_start.type === "single-run") {
 
-    cycleSync(_start.config).then(_result => {
-      console.log(_result)
+    _start.logger.info("Starting single-run of newrelic-entity-cmdb-sync.");
+    cycleSync(_start.config, _start.logger).then(_result => {
+    _start.logger.info(_result);
     });
   } //if
   else if (_start.type === "encrypt") {
 
-    encryptConfig(_start.config, _start.passphrase).then(_result => { 
+    encryptConfig(_start.config, _start.logger, _start.passphrase).then(_result => { 
       if (_result) {
-        console.log("Config file successfully encrypted.");
+        _start.logger.info("Config file successfully encrypted.");
       } //if
       else {
-        console.log("Problem encrypting config file, see output for details.");
+        _start.logger.info("Problem encrypting config file, see output for details.");
       }
     });
   } //if
   else {
   
-    console.log("Invalid startup configuration: " + _start.message);
+    _start.logger.info("Invalid startup configuration: " + _start.message);
   } //else
 });

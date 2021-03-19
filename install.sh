@@ -6,3 +6,5 @@ npm install base-64
 npm install fs
 npm install crypto-js
 npm install https-proxy-agent
+npm install winston
+npm install winston-daily-rotate-file

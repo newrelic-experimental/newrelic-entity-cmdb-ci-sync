@@ -1,4 +1,4 @@
-async function encryptConfig(_config, _passphrase) {
+async function encryptConfig(_config, _logger, _passphrase) {
     
     const fs = require('fs');
     var __rc = true;
@@ -22,11 +22,11 @@ async function encryptConfig(_config, _passphrase) {
 
     fs.writeFile('./config/enc.config.json', JSON.stringify(_config), _err => {
         if (_err) {
-            console.log('Error writing config file', _err);
+            _logger.error('Error writing config file', _err);
             __rc = false;
         } //if
          else {
-            console.log('Successfully wrote config file: enc.config.json')
+            _logger.info('Successfully wrote config file: enc.config.json');
         } //else
     });
 
@@ -64,6 +64,8 @@ async function testConfig(_config) {
 
 async function startupHandler(_args, _config) {
 
+    const winston = require('winston');
+    const DailyRotateFile = require('winston-daily-rotate-file');
     var __startUpObj = {};
 
     if (_args.length > 0) {
@@ -108,6 +110,22 @@ async function startupHandler(_args, _config) {
         __startUpObj.type = "UNSUPORTED";
         __startUpObj.message = "No commandline parameters passed to startup."
     } //else
+
+    //config logger
+    __startUpObj.logger = winston.createLogger({
+        level: _config.logs.level,
+        format: winston.format.simple(),
+        transports: [
+            new winston.transports.Console(),
+            new DailyRotateFile({
+              filename: _config.logs.filename,
+              datePattern: 'YYYY-MM-DD',
+              zippedArchive: true,
+              maxFiles: _config.logs.max_files,
+              maxSize: _config.logs.max_size
+            })
+          ]
+    });
 
     return(__startUpObj);
 } //startupHandler

@@ -1,5 +1,5 @@
 // this script contains everything we need to execute a apm lookup given the config appId/vsads
-async function cycleSync(_config) {
+async function cycleSync(_config, _logger) {
 
     // SETUP CYCLE CONTEXT
     var getCIArray = require("./utilities").getCIArray;
@@ -20,6 +20,7 @@ async function cycleSync(_config) {
     var __total_entity_duplicates = 0;
     var __total_entity_failures = 0;
     var __auditEvent = null;
+    var __cycleResponse = 'Cycle Complete';
 
     //synchronization run reporting
     __reportingEvents.push({
@@ -33,9 +34,9 @@ async function cycleSync(_config) {
     for (var i = 0; i < _config.ci_types.length; i++) {
 
         __followCursor = true; //ensuring the entity loop is re-set in advance of subsequent entity lookups
-        console.log("Running Sync for type: " + _config.ci_types[i].type);
-        __cis = await getCIArray(_config, _config.ci_types[i]);
-        console.log("CIs returned: " + __cis.length);
+        _logger.info("Running Sync for type: " + _config.ci_types[i].type);
+        __cis = await getCIArray(_config, _config.ci_types[i], _logger);
+        _logger.info("CIs returned: " + __cis.length);
         __total_cis_returned = __cis.length;
 
 
@@ -76,7 +77,7 @@ async function cycleSync(_config) {
 
                                 //add the new tags to the audit event
                                 for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
-                                    //console.log("tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
+                                    _logger.verbose("tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
                                     __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value;
                                 } //for
 
@@ -95,7 +96,7 @@ async function cycleSync(_config) {
                                     else {
                                         __total_entity_failures++;
                                     } //else
-                                    console.log("Updating Entity: " + __entityUpdateResponse.name + " : " + __entityUpdateResponse.entity_guid + " --> " + __entityUpdateResponse.message);
+                                    _logger.info("Updating Entity: " + __entityUpdateResponse.name + " : " + __entityUpdateResponse.entity_guid + " --> " + __entityUpdateResponse.message);
 
                                 } //if
                                 else {
@@ -104,25 +105,25 @@ async function cycleSync(_config) {
                                 } //else
 
                                 __reportingEvents.push(__auditEvent);
-                                console.log("This is the audit event: ", __auditEvent);
+                                _logger.verbose("This is the audit event: ", __auditEvent);
 
                             } //if
                             else {
 
-                                console.log("No match found for " + __entityUpdatePayload.name + " : " + __entityUpdatePayload.entity_guid);
+                                _logger.info("No match found for " + __entityUpdatePayload.name + " : " + __entityUpdatePayload.entity_guid);
                             } //else
                         } //for
                     } //if
                     else {
 
-                        console.error("Undefined entities returned from search: ", __nrResponseJson);
+                        _logger.error("Undefined entities returned from search: ", __nrResponseJson);
                         throw 'Undefined entities following entitySearch';
                     } //else
 
                 } //if
                 else {
 
-                    console.error("No entities returned from search: ", __nrResponseJson);
+                    _logger.error("No entities returned from search: ", __nrResponseJson);
                 } //else
 
 
@@ -140,7 +141,8 @@ async function cycleSync(_config) {
 
                 __cursorId = null;
                 __followCursor = false;
-                console.error("Problem resolving Entity details: ", _err);
+                _logger.error("Problem resolving Entity details: ", _err);
+                __cycleResponse = "Problem in Sync results may be incomplete"
             } //catch
 
         } //while
@@ -161,10 +163,10 @@ async function cycleSync(_config) {
 
     if (__reportingEvents.length > 0) {
 
-        transmitEvents(_config, __reportingEvents);
+        transmitEvents(_config, __reportingEvents, _logger);
     } //if
 
-    console.log("Cycle Complete");
+    return(__cycleResponse);
 } // cycleSync
 
 module.exports = {

@@ -86,6 +86,7 @@ The ```config.json``` file that is used to configure the synchronization service
     "key": "name",
     "api": "/api/now/table/cmdb_ci_app_server",
     "api_query_parms": "?sysparm_fields=software_install%2Cmac_address%2Cowned_by%2Cattributes%2Ccorrelation_id%2Ccost_center%2Cu_recovery_plan_name%2Csys_id%2Csys_tags%2Csys_class_name%2Cname%2Csupported_by%2Csubcategory%2Cassignment_group%2Ccategory%2Cip_address%2Casset_tag%2Crunning_process%2Crunning_process_key_parameters%2Crp_command_hash",
+    "api_page_size": 10000,
     "api_method": "GET",
     "tags": [
         "sys_class_name",
@@ -142,9 +143,26 @@ To encrypt sensitive fields in the config.json, execute the following proceedure
 - This new file with encrypted values needs to be moved / copied into ```config.json```
 - When invoking the utility subsequently accompany the commandline option with the passphase for the encrypted config (e.g. ```node ./js/index.js single-run <my_awesome_passphrase>```)
 
+### Logging
+
+The logs section determines the location, size and max number of logs for the process. 
+
+```javascript
+"logs": {
+    "filename": "cmdb-sync.log",
+    "level": "info",
+    "max_size": "20m",
+    "max_files": "7d"
+}
+```
+- _filename_: The name (location) of the log output file. Default location is in the root diretcory.
+- _level_: one of (error | warn | info | http | verbose | debug | silly)
+- _max_size_: Maximum size of the file after which it will rotate. This can be a number of bytes, or units of kb, mb, and gb. If using the units, add 'k', 'm', or 'g' as the suffix. The units need to directly follow the number.
+- _max_files_: Maximum number of logs to keep. If not set, no logs will be removed. This can be a number of files or number of days. If using days, add 'd' as the suffix.
+
 ### ServiceNow specific config
 
-Please see CI Types and Provider section for details.
+Please see CI Types and Provider section for details. ServiceNow is the only supported CMDB at present.
 
 ### Command line parameters
 

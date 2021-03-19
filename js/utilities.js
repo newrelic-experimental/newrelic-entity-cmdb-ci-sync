@@ -1,22 +1,24 @@
-async function getCIArray(_config, _ci_type) {
+const { loggers } = require('winston');
 
+async function getCIArray(_config, _ci_type, _logger) {
+console.log("called");
     var __cis = [];
 
     try {
 
         if (_config.provider.type === "servicenow") {
 
-            __cis = await _getServiceNowCIs(_config, _ci_type);
+            __cis = await _getServiceNowCIs(_config, _ci_type, _logger);
         } //if
         else {
 
-            console.log("[utilities::getCIArray] UNKNOWN PROVIDER TYPE - NO SYNC WILL HAPPEN",);
+            _logger.error("[utilities::getCIArray] UNKNOWN PROVIDER TYPE - NO SYNC WILL HAPPEN",);
         } //else
 
     } //try
     catch (_err) {
 
-        console.error("[utilities::getCIArray] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
+        _logger.error("[utilities::getCIArray] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
 
     } //catch
 
@@ -24,7 +26,7 @@ async function getCIArray(_config, _ci_type) {
 } //getCIArray
 
 /* TODO this is ServiceNow specific and needs to be made generic - output based on parameter */
-async function _getLastUpdateTS(_config) {
+async function _getLastUpdateTS(_config, _logger) {
 
     const fetch = require('isomorphic-fetch');
     const HttpsProxyAgent = require('https-proxy-agent');
@@ -90,20 +92,20 @@ async function _getLastUpdateTS(_config) {
         else {
             var __date = new Date(Number(__json_response.data.actor.account.nrql.results[0]["latest.timestamp"]));
             __lastUpdateTS = `'${__date.getFullYear()}-${("0" + (__date.getMonth() + 1)).slice(-2)}-${("0" + __date.getDate()).slice(-2)}'%2C'${("0" +  __date.getHours()).slice(-2)}%3A00%3A00'`;
-            console.log("Last updated timestamp is: " + __lastUpdateTS);
+            _logger.verbose("Last updated timestamp is: " + __lastUpdateTS);
         } //else
     } //try
     catch(_err) {
 
-        console.log("[utilities:getLastUpdateTS] Problem getting timestamp for CMDB Sync from " + _config.nrdb_entitysync_event_name + " NRDB Table.");
-        console.error("[utilities::getLastUpdateTS]", _err);
+        _logger.error("[utilities:getLastUpdateTS] Problem getting timestamp for CMDB Sync from " + _config.nrdb_entitysync_event_name + " NRDB Table.");
+        _logger.error("[utilities::getLastUpdateTS]", _err);
         __lastUpdateTS = `'1973-03-17'%2C'00%3A00%3A00'`;
     } //catch
 
     return(__lastUpdateTS);
 } //getLastUpdateTS
 
-async function getNREntities(_config, _entity_shape, _cursor) {
+async function getNREntities(_config, _entity_shape, _cursor, _logger) {
 
     const fetch = require('isomorphic-fetch');
     const HttpsProxyAgent = require('https-proxy-agent');
@@ -193,14 +195,14 @@ async function getNREntities(_config, _entity_shape, _cursor) {
     } //try
     catch(_err) {
 
-        console.log("Problem querying for entities: " + _domain + " cursor: " + _cursor);
-        console.error("[utilities::getNREntities]", _err);
+        _logger.error("Problem querying for entities: " + _domain + " cursor: " + _cursor);
+        _logger.error("[utilities::getNREntities]", _err);
     } //catch
 
     return(__json_response);
 } //getNREntities
 
-async function reconcileEntity(_ciType, _entity, _candidateCIs) {
+async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
 
    // console.log("Entity to reconcile: ", _entity);
     var __entityUpdatePayload = {
@@ -231,7 +233,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
             } // if
         } //if
         else {
-            console.error("[utilities:reconcileEntity] No tag value found for " + _ciType.nr_entity_key.key + " on entity " + _entity.name);
+            _logger.error("[utilities:reconcileEntity] No tag value found for " + _ciType.nr_entity_key.key + " on entity " + _entity.name);
             return(__entityUpdatePayload);
         } //else
 
@@ -239,7 +241,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
     else {
 
         // unknown type key - no match will be possible
-        console.error("[utilities:reconcileEntity] Unexpected nr_entity_key.type encountered " + _ciType.nr_entity_key.type + " no match possible. Check your config.json.");
+        _logger.error("[utilities:reconcileEntity] Unexpected nr_entity_key.type encountered " + _ciType.nr_entity_key.type + " no match possible. Check your config.json.");
         return(__entityUpdatePayload);
     } //else
 
@@ -289,7 +291,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
         } //else if
         else {
 
-            console.log("No key matching strategy recognized, please review config.json.");
+            _logger.info("No key matching strategy recognized, please review config.json.");
         } //else
 
     } //for
@@ -297,7 +299,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs) {
     return(__entityUpdatePayload);
 } //reconcileEntity
 
-async function updateEntity(_config, _entityUpdate) {
+async function updateEntity(_config, _entityUpdate, _logger) {
 
     const fetch = require('isomorphic-fetch');
     const HttpsProxyAgent = require('https-proxy-agent');
@@ -357,14 +359,14 @@ async function updateEntity(_config, _entityUpdate) {
             } //else
 
             __responseJson = await __apiResponse.json();
-            console.log("Write response", __responseJson);
-            console.log("Write response errz", __responseJson.data.taggingAddTagsToEntity.errors); //TODO adding - review context
+            _logger.info("Write response", __responseJson);
+            _logger.info("Write response errz", __responseJson.data.taggingAddTagsToEntity.errors); //TODO adding - review context
 
         } //try
         catch(_err) {
 
-            console.log("Problem writing tag for entity: " + _entityUpdate.name + " trying to write " + _entityUpdate.tags[i].key + " : " + _entityUpdate.tags[i].value);
-            console.error("[utilities::updateEntity]", _err);
+            _logger.error("Problem writing tag for entity: " + _entityUpdate.name + " trying to write " + _entityUpdate.tags[i].key + " : " + _entityUpdate.tags[i].value);
+            _logger.error("[utilities::updateEntity]", _err);
             __entityUpdateResponse.message = "FAILURE: " + _err;
         } //catch
 
@@ -374,7 +376,7 @@ async function updateEntity(_config, _entityUpdate) {
 
 } //updateEntity
 
-async function _formatAdditiveTags(_entity, _ciType, _ci) {
+async function _formatAdditiveTags(_entity, _ciType, _ci, _logger) {
 
     var __entityTags = [];
     var __tagEvaluator = false;
@@ -383,8 +385,8 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
     // loop the tag array defined in the ci configuration
     for (var i = 0; i < _ciType.tags.length; i++) {
 
-        __ciTagValue = await _getCIAttributeValue(_ci, _ciType.tags[i]);
-        __tagEvaluator = await _entityHasTagAndValue(_entity, _ciType.nr_entity_tag_key[_ciType.tags[i]], __ciTagValue);
+        __ciTagValue = await _getCIAttributeValue(_ci, _ciType.tags[i], _logger);
+        __tagEvaluator = await _entityHasTagAndValue(_entity, _ciType.nr_entity_tag_key[_ciType.tags[i]], __ciTagValue, _logger);
 
         if (!__tagEvaluator) {
 
@@ -396,12 +398,12 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
                 });
             } //if
             else{
-                console.log("Attempting to update an Entity with a tag where there is no value, skipping. Tag: " + _ciType.nr_entity_tag_key[_ciType.tags[i]] + " --> " + _ciType.tags[i]);
+                _logger.info("Attempting to update an Entity with a tag where there is no value, skipping. Tag: " + _ciType.nr_entity_tag_key[_ciType.tags[i]] + " --> " + _ciType.tags[i]);
             } //else
 
         } //if
         else {
-            console.log("Entity already has tag and the same value, skipping update.")
+            _logger.info("Entity already has tag and the same value, skipping update.")
         } //else
 
     } //for
@@ -414,7 +416,7 @@ async function _formatAdditiveTags(_entity, _ciType, _ci) {
  * @param {*} _ci
  * @param {*} _ciTypeTag
  */
-async function _getCIAttributeValue(_ci, _ciTypeTag) {
+async function _getCIAttributeValue(_ci, _ciTypeTag, _logger) {
 
     var __tagValue;
 
@@ -429,10 +431,10 @@ async function _getCIAttributeValue(_ci, _ciTypeTag) {
     return(__tagValue);
 } //_getCIAttributeValue
 
-async function _entityHasTagAndValue(_entity, _key, _value) {
-//console.log("The entity: ", _entity);
-//console.log("The key: ", _key);
-//console.log("The value: ", _value);
+async function _entityHasTagAndValue(_entity, _key, _value, _logger) {
+    _logger.debug("The entity: ", _entity);
+    _logger.debug("The key: ", _key);
+    _logger.debug("The value: ", _value);
 
     var __rc = false;
 
@@ -449,8 +451,8 @@ async function _entityHasTagAndValue(_entity, _key, _value) {
     return(__rc);
 } //_entityHasTag
 
-async function _getServiceNowCIs(_config, _ci_type) {
-
+async function _getServiceNowCIs(_config, _ci_type, _logger) {
+console.log("called");
     const fetch = require('isomorphic-fetch');
     const base64 = require('base-64');
     const HttpsProxyAgent = require('https-proxy-agent');
@@ -465,12 +467,13 @@ async function _getServiceNowCIs(_config, _ci_type) {
     var __limitParm = null;
     var __offset = 0;
     var __offsetParm = null;
+    var __totalRecords = null;
 
     try {
 
         if (_ci_type.api_query_parms.includes("${sys_updated_on}")) {
 
-            __last_timestamp = await _getLastUpdateTS(_config);
+            __last_timestamp = await _getLastUpdateTS(_config, _logger);
             __modified_query_parms = _ci_type.api_query_parms.replace("${sys_updated_on}", __last_timestamp);
         } //if
         else {
@@ -508,17 +511,18 @@ async function _getServiceNowCIs(_config, _ci_type) {
         } //else
 
         __json_response = await __api_response.json();
+        _logger.verbose(JSON.stringify(__json_response));
         __cis = __json_response.result;
-        var totalRecords = await __api_response.headers.get('X-Total-Count');
+        __totalRecords = await __api_response.headers.get('X-Total-Count');
         //console.log("CIs:", __cis);
 
-        if (totalRecords > __limit) {
+        if (__totalRecords > __limit) {
           do {
             __offset = __offset + __limit;
             __offsetParm = "&sysparm_offset=" + __offset;
             __request_url = _config.provider.api_url + _ci_type.api + __modified_query_parms + __limitParm + __offsetParm;
 
-            if (__offset > totalRecords) {
+            if (__offset > __totalRecords) {
               break;
             }
 
@@ -552,14 +556,14 @@ async function _getServiceNowCIs(_config, _ci_type) {
     } //try
     catch (_err) {
 
-        console.error("[utilities::_getServiceNowCIs] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
+        _logger.error("[utilities::_getServiceNowCIs] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
     } //catch
-    // console.log("allCIs" + __cis);
+   
     return(__cis);
 } //_getServiceNowCIs
 
-async function transmitEvents(_config, _eventsArray) {
-    console.log("Transmitting events ... ");
+async function transmitEvents(_config, _eventsArray, _logger) {
+    _logger.verbose("Transmitting events ... ");
     if (_eventsArray.length > 0) {
 
         const fetch = require('isomorphic-fetch');
@@ -571,6 +575,7 @@ async function transmitEvents(_config, _eventsArray) {
 
             if (_config.proxy.enabled) {
 
+                __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
                 __response = await fetch(_config.nrdb_insert_url, {
                     method: 'POST',
                     agent: __proxy_agent,
@@ -593,16 +598,16 @@ async function transmitEvents(_config, _eventsArray) {
                 });
             } //else
 
-            console.log(">> Event Transmit Result: " + __response.ok);
+            _logger.info(">> Event Transmit Result: " + __response.ok);
         } //try
         catch (_err) {
 
-            console.log("APM: Failure transmitting events. ", _err);
+            _logger.error("APM: Failure transmitting events. ", _err);
         } //catch
 
     } //if
     else {
-        console.log("No events to transmit")
+        _logger.info("No events to transmit");
     } //else
 } //transmitEvents
 

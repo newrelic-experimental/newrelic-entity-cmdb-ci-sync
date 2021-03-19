@@ -93,6 +93,12 @@
         "enabled": false,
         "address": "http://192.168.99.100:8080"
     },
+    "logs": {
+        "filename": "cmdb-sync.log",
+        "level": "info",
+        "max_size": "20m",
+        "max_files": "7d"
+    },
     "nrdb_insert_api_key": "NRII-###########",
     "nrdb_insert_url": "https://insights-collector.newrelic.com/v1/accounts/###########/events",
     "nrdb_entitysync_event_name": "SNOW_ENTITY_SYNC",
