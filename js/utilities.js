@@ -254,7 +254,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
             if (_candidateCIs[i][_ciType.key].toUpperCase() === __entity_key.toUpperCase()) {
                 __entityUpdatePayload.found = true;
                 __entityUpdatePayload.ci = _candidateCIs[i];
-                __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i], _logger);
                 break;
             } //if
 
@@ -264,7 +264,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
             if (_candidateCIs[i][_ciType.key] === __entity_key) {
                 __entityUpdatePayload.found = true;
                 __entityUpdatePayload.ci = _candidateCIs[i];
-                __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i], _logger);
                 break;
             } //if
 
@@ -274,7 +274,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
             if (_candidateCIs[i][_ciType.key].includes(__entity_key)) {
                  __entityUpdatePayload.found = true;
                  __entityUpdatePayload.ci = _candidateCIs[i];
-                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i], _logger);
                  break;
              } //if
 
@@ -284,7 +284,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
             if (_candidateCIs[i][_ciType.key].toUpperCase().includes(__entity_key.toUpperCase())) {
                  __entityUpdatePayload.found = true;
                  __entityUpdatePayload.ci = _candidateCIs[i];
-                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i]);
+                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i], _logger);
                  break;
             } //if
 
@@ -366,7 +366,7 @@ async function updateEntity(_config, _entityUpdate, _logger) {
         catch(_err) {
 
             _logger.error("Problem writing tag for entity: " + _entityUpdate.name + " trying to write " + _entityUpdate.tags[i].key + " : " + _entityUpdate.tags[i].value);
-            _logger.error("[utilities::updateEntity]", _err);
+            _logger.error("[utilities::updateEntity]" + JSON.stringify(_err));
             __entityUpdateResponse.message = "FAILURE: " + _err;
         } //catch
 
@@ -407,7 +407,7 @@ async function _formatAdditiveTags(_entity, _ciType, _ci, _logger) {
         } //else
 
     } //for
-    // console.log("entity tags being added: ",  __entityTags);
+     _logger.verbose("Entity tags being added: ",  __entityTags);
     return (__entityTags);
 } // _formatAdditiveTags
 
