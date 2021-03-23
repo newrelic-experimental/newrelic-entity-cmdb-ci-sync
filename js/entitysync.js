@@ -52,7 +52,7 @@ async function cycleSync(_config, _logger) {
 
             try {
 
-                __nrResponseJson = await getNREntities(_config, _config.ci_types[i], __cursorId);
+                __nrResponseJson = await getNREntities(_config, _config.ci_types[i], __cursorId, _logger);
 
                 if (__nrResponseJson !== null && __nrResponseJson.data.actor.entitySearch !== null) {
 
@@ -61,7 +61,7 @@ async function cycleSync(_config, _logger) {
                         for (var j = 0; j < __nrResponseJson.data.actor.entitySearch.results.entities.length; j++) {
 
                             __total_entities_processes++; // reporting number of entities processed
-                            __entityUpdatePayload = await reconcileEntity(_config.ci_types[i], __nrResponseJson.data.actor.entitySearch.results.entities[j], __cis);
+                            __entityUpdatePayload = await reconcileEntity(_config.ci_types[i], __nrResponseJson.data.actor.entitySearch.results.entities[j], __cis, _logger);
 
                             if (__entityUpdatePayload.found) {
 
@@ -84,7 +84,7 @@ async function cycleSync(_config, _logger) {
 
                                 if (_config.provider.update_entity === true) {
 
-                                    __entityUpdateResponse = await updateEntity(_config, __entityUpdatePayload);
+                                    __entityUpdateResponse = await updateEntity(_config, __entityUpdatePayload, _logger);
                                     __auditEvent.entity_update_status = __entityUpdateResponse.message;
 
                                     if (__entityUpdateResponse.message === "SUCCESS") {
