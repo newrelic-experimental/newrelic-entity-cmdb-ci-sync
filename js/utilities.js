@@ -289,6 +289,16 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
             } //if
 
         } //else if
+        else if (_ciType.nr_entity_key.strategy === "inverse_caseless_contains") {
+
+            if (__entity_key.toUpperCase().includes(_candidateCIs[i][_ciType.key].toUpperCase())) {
+                 __entityUpdatePayload.found = true;
+                 __entityUpdatePayload.ci = _candidateCIs[i];
+                 __entityUpdatePayload.tags = await _formatAdditiveTags(_entity, _ciType, _candidateCIs[i], _logger);
+                 break;
+            } //if
+
+        } // else if
         else {
 
             _logger.info("No key matching strategy recognized, please review config.json.");
@@ -558,7 +568,7 @@ console.log("called");
 
         _logger.error("[utilities::_getServiceNowCIs] NO CIs FOUND - NO SYNC WILL HAPPEN", _err);
     } //catch
-   
+
     return(__cis);
 } //_getServiceNowCIs
 

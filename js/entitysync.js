@@ -37,7 +37,7 @@ async function cycleSync(_config, _logger) {
         _logger.info("Running Sync for type: " + _config.ci_types[i].type);
         __cis = await getCIArray(_config, _config.ci_types[i], _logger);
         _logger.info("CIs returned: " + __cis.length);
-        __total_cis_returned = __cis.length;
+        __total_cis_returned += __cis.length;
 
 
        //synchronization run reporting
@@ -45,7 +45,8 @@ async function cycleSync(_config, _logger) {
             "eventType": _config.nrdb_entitysync_event_name,
             "action": "ci_harvest",
             "version": _config.version,
-            "ci_cardinality": __cis.length
+            "ci_cardinality": __cis.length,
+            "ci_table": _config.ci_types[i].type
         });
 
         while(__followCursor) {
@@ -65,27 +66,27 @@ async function cycleSync(_config, _logger) {
 
                             if (__entityUpdatePayload.found) {
 
-                                //record audit message of a reconciled CI/Entity pair
-                                __auditEvent = {};
-                                __auditEvent.eventType = _config.nrdb_entitysync_event_name;
-                                __auditEvent.action = "ci_processed";
-                                __auditEvent.version = _config.version;
-                                __auditEvent.found = __entityUpdatePayload.found;
-                                __auditEvent.entity_guid = __entityUpdatePayload.entity_guid;
-                                __auditEvent.entity_name = __entityUpdatePayload.name;
-                                __auditEvent.entity_update_allowed = _config.provider.update_entity;
+                                // //record audit message of a reconciled CI/Entity pair
+                                // __auditEvent = {};
+                                // __auditEvent.eventType = _config.nrdb_entitysync_event_name;
+                                // __auditEvent.action = "ci_processed";
+                                // __auditEvent.version = _config.version;
+                                // __auditEvent.found = __entityUpdatePayload.found;
+                                // __auditEvent.entity_guid = __entityUpdatePayload.entity_guid;
+                                // __auditEvent.entity_name = __entityUpdatePayload.name;
+                                // __auditEvent.entity_update_allowed = _config.provider.update_entity;
 
-                                //add the new tags to the audit event
-                                for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
-                                    _logger.verbose("tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
-                                    __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value;
-                                } //for
+                                // //add the new tags to the audit event
+                                // for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
+                                //     _logger.verbose("tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
+                                //     __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value;
+                                // } //for
 
 
                                 if (_config.provider.update_entity === true) {
 
                                     __entityUpdateResponse = await updateEntity(_config, __entityUpdatePayload, _logger);
-                                    __auditEvent.entity_update_status = __entityUpdateResponse.message;
+                                    // __auditEvent.entity_update_status = __entityUpdateResponse.message;
 
                                     if (__entityUpdateResponse.message === "SUCCESS") {
                                         __total_entity_updates++;
@@ -104,7 +105,7 @@ async function cycleSync(_config, _logger) {
                                     __auditEvent.entity_update_status = "NO UPDATE ATTEMPT";
                                 } //else
 
-                                __reportingEvents.push(__auditEvent);
+                                // __reportingEvents.push(__auditEvent);
                                 _logger.verbose("This is the audit event: ", __auditEvent);
 
                             } //if
