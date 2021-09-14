@@ -121,7 +121,7 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source.
 - _nr_entity_key.type_: What type of Entity metadata will we use to reconcile the CI (attribute | tag). If _attribute_ is selected, the following _nr_entity_key.key_ value is limited to direct attributes of the Entity such as (name | accountId | guid). If _tag_ is selected the _nr_entity_key.key_ can be any value that matches a tag key possessed by the target Entity.
 - _nr_entity_key.key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
-- _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match|exact_contains|caseless_contains).
+- _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match|exact_contains|caseless_contains|inverse_caseless_contains).
 - _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
 - _nr_entity_tag_key_: The New Relic Entity key value (name) for the _provider_ attribute value.
 
@@ -145,7 +145,7 @@ To encrypt sensitive fields in the config.json, execute the following proceedure
 
 ### Logging
 
-The logs section determines the location, size and max number of logs for the process. 
+The logs section determines the location, size and max number of logs for the process.
 
 ```javascript
 "logs": {
