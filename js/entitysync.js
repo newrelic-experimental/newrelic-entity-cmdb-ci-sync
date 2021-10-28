@@ -164,7 +164,7 @@ async function cycleSync(_config, _logger) {
 
     if (__reportingEvents.length > 0) {
 
-        transmitEvents(_config, __reportingEvents, _logger);
+        //transmitEvents(_config, __reportingEvents, _logger);
     } //if
 
     return(__cycleResponse);

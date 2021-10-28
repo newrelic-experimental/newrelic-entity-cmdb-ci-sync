@@ -320,6 +320,7 @@ async function updateEntity(_config, _entityUpdate, _logger) {
     var __apiResponse = null;
     var __responseJson = null;
     var __proxy_agent = null;
+    var __tagDeleted = null;
 
     if (_entityUpdate.tags.length === 0) {
 
@@ -328,14 +329,21 @@ async function updateEntity(_config, _entityUpdate, _logger) {
 
     for (var i = 0; i < _entityUpdate.tags.length; i++) {
 
-        __mutation = `mutation {
-            taggingAddTagsToEntity(guid: "${_entityUpdate.entity_guid}", tags: {key: "${_entityUpdate.tags[i].key}", values: ["${_entityUpdate.tags[i].value}"]}) {
-                errors {
-                    message
-                    type
-                }
-            }
-        }`;
+       if (_entityUpdate.tags[i].method == 'update') {
+         __tagDeleted = await _removeExistingTag(_config, _entityUpdate.entity_guid, _entityUpdate.tags[i].key, _logger);
+         if (!__tagDeleted) {
+           __entityUpdateResponse.message = "DELETION FAILURE";
+         }
+       }
+
+       __mutation = `mutation {
+           taggingAddTagsToEntity(guid: "${_entityUpdate.entity_guid}", tags: {key: "${_entityUpdate.tags[i].key}", values: ["${_entityUpdate.tags[i].value}"]}) {
+               errors {
+                   message
+                   type
+               }
+           }
+       }`;
 
         try {
 
@@ -386,6 +394,79 @@ async function updateEntity(_config, _entityUpdate, _logger) {
 
 } //updateEntity
 
+async function _removeExistingTag(_config, guid, tagKey, _logger) {
+
+  const fetch = require('isomorphic-fetch');
+  const HttpsProxyAgent = require('https-proxy-agent');
+
+
+  var __deleteSuccess = true;
+  var __deleteMutation = null;
+  var __apiResponse = null;
+  var __responseJson = null;
+  var __proxy_agent = null;
+
+  __deleteMutation = `mutation {
+      taggingDeleteTagFromEntity(guid: "${guid}", tagKeys: ["${tagKey}"]) {
+          errors {
+              message
+              type
+          }
+      }
+  }`
+
+  try {
+
+      if (_config.proxy.enabled) {
+
+          __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
+          __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+              method: 'POST',
+              agent: __proxy_agent,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'API-Key': _config.nr_graph_api_key
+              },
+              body: JSON.stringify({
+                  query: __deleteMutation,
+                  variables: ''}),
+              });
+      } //if
+      else {
+
+          __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'API-Key': _config.nr_graph_api_key
+              },
+              body: JSON.stringify({
+                  query: __deleteMutation,
+                  variables: ''}),
+              });
+      } //else
+
+      __responseJson = await __apiResponse.json();
+      _logger.info("Write response", __responseJson);
+      _logger.info("Write response errz", __responseJson.data.taggingDeleteTagFromEntity.errors); //TODO adding - review context
+
+      if (__responseJson.data.taggingDeleteTagFromEntity.errors.length > 0) {
+        __deleteSuccess = false;
+      }
+
+  } //try
+  catch(_err) {
+
+      _logger.error("Problem deleting tag for entity guid: " + guid + ". trying to delete tag: " + tagKey);
+      _logger.error("[utilities::deleteEntityTag]" + JSON.stringify(_err));
+      __deleteSuccess = false;
+  } //catch
+
+  return (__deleteSuccess);
+
+}
+
+
 async function _formatAdditiveTags(_entity, _ciType, _ci, _logger) {
 
     var __entityTags = [];
@@ -398,13 +479,14 @@ async function _formatAdditiveTags(_entity, _ciType, _ci, _logger) {
         __ciTagValue = await _getCIAttributeValue(_ci, _ciType.tags[i], _logger);
         __tagEvaluator = await _entityHasTagAndValue(_entity, _ciType.nr_entity_tag_key[_ciType.tags[i]], __ciTagValue, _logger);
 
-        if (!__tagEvaluator) {
+        if (__tagEvaluator == "add" || __tagEvaluator == "update") {
 
             //check to see that we are not pushing a null string - api does not cotton to this.
             if (_ci[__ciTagValue] !== '') {
                 __entityTags.push({
                     key: _ciType.nr_entity_tag_key[_ciType.tags[i]],
-                    value: __ciTagValue
+                    value: __ciTagValue,
+                    method: __tagEvaluator
                 });
             } //if
             else{
@@ -446,17 +528,34 @@ async function _entityHasTagAndValue(_entity, _key, _value, _logger) {
     _logger.debug("The key: ", _key);
     _logger.debug("The value: ", _value);
 
-    var __rc = false;
+
+    var __rc = null;
+    var __valueExists = false;
+    var __keyExists = false;
 
     for (var i = 0; i < _entity.tags.length; i++) {
 
         if (_entity.tags[i].key === _key) {
+            __keyExists = true
             //does this entity's tag value the same
             if (_entity.tags[i].values.includes(_value)) {
-                __rc = true;
+                __valueExists = true;
             } //if
         } //if
     } //for
+
+    if (__keyExists && __valueExists) {
+      __rc = "skip"
+    }
+
+    if (__keyExists && !__valueExists) {
+      __rc = "update"
+    }
+
+    if (!__keyExists && !__valueExists) {
+      __rc = "add"
+    }
+
 
     return(__rc);
 } //_entityHasTag

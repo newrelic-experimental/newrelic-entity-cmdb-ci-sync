@@ -6,7 +6,7 @@
     "fs": "*",
     "https-proxy-agent": "^5.0.0",
     "isomorphic-fetch": "^3.0.0",
-    "newrelic": "^8.3.0",
+    "newrelic": "^8.5.0",
     "node-cron": "^3.0.0",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.5"
