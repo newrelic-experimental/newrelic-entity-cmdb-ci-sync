@@ -330,10 +330,14 @@ async function updateEntity(_config, _entityUpdate, _logger) {
     for (var i = 0; i < _entityUpdate.tags.length; i++) {
 
        if (_entityUpdate.tags[i].method == 'update') {
+         _logger.info("Updating tag value for key: " + _entityUpdate.tags[i].key + " to " + _entityUpdate.tags[i].value);
          __tagDeleted = await _removeExistingTag(_config, _entityUpdate.entity_guid, _entityUpdate.tags[i].key, _logger);
          if (!__tagDeleted) {
+           _logger.info("Failed to update tag value for key: " + _entityUpdate.tags[i].key + " to " + _entityUpdate.tags[i].value);
            __entityUpdateResponse.message = "DELETION FAILURE";
          }
+       } else {
+         _logger.info("Adding tag: " + _entityUpdate.tags[i].key + ":" + _entityUpdate.tags[i].value);
        }
 
        __mutation = `mutation {
@@ -447,8 +451,8 @@ async function _removeExistingTag(_config, guid, tagKey, _logger) {
       } //else
 
       __responseJson = await __apiResponse.json();
-      _logger.info("Write response", __responseJson);
-      _logger.info("Write response errz", __responseJson.data.taggingDeleteTagFromEntity.errors); //TODO adding - review context
+      _logger.info("Delete response", __responseJson);
+      _logger.info("Delete response errz", __responseJson.data.taggingDeleteTagFromEntity.errors); //TODO adding - review context
 
       if (__responseJson.data.taggingDeleteTagFromEntity.errors.length > 0) {
         __deleteSuccess = false;
