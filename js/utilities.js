@@ -160,6 +160,9 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
 
     try {
 
+        // _logger.debug("Running GQL: ");
+        // _logger.debug(__query);
+
         if (_config.proxy.enabled) {
 
             __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
@@ -191,6 +194,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
         } //else
 
         __json_response = await __response.json();
+        _logger.debug("Entity Response:" + JSON.stringify(__json_response));
 
     } //try
     catch(_err) {
@@ -529,9 +533,8 @@ async function _getCIAttributeValue(_ci, _ciTypeTag, _logger) {
 
 async function _entityHasTagAndValue(_entity, _key, _value, _logger) {
     _logger.debug("The entity: ", _entity);
-    _logger.debug("The key: ", _key);
-    _logger.debug("The value: ", _value);
-
+    _logger.debug("The key: " + _key);
+    _logger.debug("The value: " + _value);
 
     var __rc = null;
     var __valueExists = false;
@@ -541,7 +544,7 @@ async function _entityHasTagAndValue(_entity, _key, _value, _logger) {
 
         if (_entity.tags[i].key === _key) {
             __keyExists = true
-            //does this entity's tag value the same
+            //is this entity's tag value the same
             if (_entity.tags[i].values.includes(_value)) {
                 __valueExists = true;
             } //if
@@ -624,7 +627,7 @@ console.log("called");
         } //else
 
         __json_response = await __api_response.json();
-        _logger.verbose(JSON.stringify(__json_response));
+        //_logger.verbose(JSON.stringify(__json_response));
         __cis = __json_response.result;
         __totalRecords = await __api_response.headers.get('X-Total-Count');
         //console.log("CIs:", __cis);

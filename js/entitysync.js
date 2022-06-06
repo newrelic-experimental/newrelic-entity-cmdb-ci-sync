@@ -34,6 +34,7 @@ async function cycleSync(_config, _logger) {
     for (var i = 0; i < _config.ci_types.length; i++) {
 
         __followCursor = true; //ensuring the entity loop is re-set in advance of subsequent entity lookups
+        __cursorId = null; //reset cursor for next type
         _logger.info("Running Sync for type: " + _config.ci_types[i].type);
         __cis = await getCIArray(_config, _config.ci_types[i], _logger);
         _logger.info("CIs returned: " + __cis.length);
@@ -59,12 +60,16 @@ async function cycleSync(_config, _logger) {
 
                     if (__nrResponseJson.data.actor.entitySearch.results.entities !== undefined) {
 
+                        let entityLength = __nrResponseJson.data.actor.entitySearch.results.entities.length;
+                        _logger.info("New Relic Entities Returned: " + entityLength)
+
                         for (var j = 0; j < __nrResponseJson.data.actor.entitySearch.results.entities.length; j++) {
 
                             __total_entities_processes++; // reporting number of entities processed
                             __entityUpdatePayload = await reconcileEntity(_config.ci_types[i], __nrResponseJson.data.actor.entitySearch.results.entities[j], __cis, _logger);
 
                             if (__entityUpdatePayload.found) {
+                                _logger.debug("Found Entity: " + __entityUpdatePayload.name)
 
                                 // //record audit message of a reconciled CI/Entity pair
                                 // __auditEvent = {};
@@ -103,6 +108,7 @@ async function cycleSync(_config, _logger) {
                                 else {
 
                                     __auditEvent.entity_update_status = "NO UPDATE ATTEMPT";
+                                    _logger.info("NO UPDATE ATTEMPT")
                                 } //else
 
                                 // __reportingEvents.push(__auditEvent);
