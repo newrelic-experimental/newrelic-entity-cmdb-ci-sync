@@ -20,7 +20,7 @@ startup(args, config_file).then(_start =>{
     // execute the daily run of the entity sync for each entity type/domain
     cron.schedule("0 " +  _start.config.daily_sync_time + " * * *", function() {
 
-        _start.logger.info("Running cron cycle");
+        _start.logger.info("[ index::startup ] Running cron cycle");
         cycleSync(_start.config, _start.logger).then(_result => {
           _start.logger.info(_result)
         });
@@ -31,7 +31,7 @@ startup(args, config_file).then(_start =>{
   } //if
   else if (_start.type === "single-run") {
 
-    _start.logger.info("Starting single-run of newrelic-entity-cmdb-sync.");
+    _start.logger.info("[ index::startup ] Starting single-run of newrelic-entity-cmdb-sync.");
     cycleSync(_start.config, _start.logger).then(_result => {
     _start.logger.info(_result);
     });
@@ -40,15 +40,15 @@ startup(args, config_file).then(_start =>{
 
     encryptConfig(_start.config, _start.logger, _start.passphrase).then(_result => { 
       if (_result) {
-        _start.logger.info("Config file successfully encrypted.");
+        _start.logger.info("[ index::startup ] Config file successfully encrypted.");
       } //if
       else {
-        _start.logger.info("Problem encrypting config file, see output for details.");
+        _start.logger.info("[ index::startup ] Problem encrypting config file, see output for details.");
       }
     });
   } //if
   else {
   
-    _start.logger.info("Invalid startup configuration: " + _start.message);
+    _start.logger.info("[ index::startup ] Invalid startup configuration: " + _start.message);
   } //else
 });
