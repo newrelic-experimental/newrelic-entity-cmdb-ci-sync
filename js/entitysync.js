@@ -16,6 +16,7 @@ async function cycleSync(_config, _logger) {
     var __reportingEvents = [];
     var __total_entities_processes = 0;
     var __total_cis_returned = 0;
+    var __total_nr_entities_returned = 0;
     var __total_entity_updates = 0;
     var __total_entity_duplicates = 0;
     var __total_entity_failures = 0;
@@ -35,10 +36,12 @@ async function cycleSync(_config, _logger) {
 
         __followCursor = true; //ensuring the entity loop is re-set in advance of subsequent entity lookups
         __cursorId = null; //reset cursor for next type
-        _logger.info("Running Sync for type: " + _config.ci_types[i].type);
+        _logger.info("[ entitysync::cycleSync ] Running Sync for type: " + _config.ci_types[i].type);
+        _logger.info("[ entitysync::cycleSync ] Syncing with NR entity domain: " + _config.ci_types[i].nr_entity_domain + " and type: " + _config.ci_types[i].nr_entity_type);
         __cis = await getCIArray(_config, _config.ci_types[i], _logger);
-        _logger.info("CIs returned: " + __cis.length);
+        _logger.info("[ entitysync::cycleSync ] CIs returned: " + __cis.length);
         __total_cis_returned += __cis.length;
+        __total_nr_entities_returned = 0; //reset the entities returned count
 
 
        //synchronization run reporting
@@ -61,7 +64,8 @@ async function cycleSync(_config, _logger) {
                     if (__nrResponseJson.data.actor.entitySearch.results.entities !== undefined) {
 
                         let entityLength = __nrResponseJson.data.actor.entitySearch.results.entities.length;
-                        _logger.info("New Relic Entities Returned: " + entityLength)
+                        _logger.verbose("[ entitysync::cycleSync ] New Relic Entities Returned: " + entityLength)
+                        __total_nr_entities_returned += entityLength;
 
                         for (var j = 0; j < __nrResponseJson.data.actor.entitySearch.results.entities.length; j++) {
 
@@ -69,7 +73,7 @@ async function cycleSync(_config, _logger) {
                             __entityUpdatePayload = await reconcileEntity(_config.ci_types[i], __nrResponseJson.data.actor.entitySearch.results.entities[j], __cis, _logger);
 
                             if (__entityUpdatePayload.found) {
-                                _logger.debug("Found Entity: " + __entityUpdatePayload.name)
+                                _logger.debug("[ entitysync::cycleSync ] Found Entity: " + __entityUpdatePayload.name)
 
                                 // //record audit message of a reconciled CI/Entity pair
                                 // __auditEvent = {};
@@ -83,7 +87,7 @@ async function cycleSync(_config, _logger) {
 
                                 // //add the new tags to the audit event
                                 // for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
-                                //     _logger.verbose("tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
+                                //     _logger.verbose("[ entitysync::cycleSync ] tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
                                 //     __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value;
                                 // } //for
 
@@ -102,35 +106,35 @@ async function cycleSync(_config, _logger) {
                                     else {
                                         __total_entity_failures++;
                                     } //else
-                                    _logger.info("Updating Entity: " + __entityUpdateResponse.name + " : " + __entityUpdateResponse.entity_guid + " --> " + __entityUpdateResponse.message);
+                                    _logger.info("[ entitysync::cycleSync ] Updating Entity: " + __entityUpdateResponse.name + " : " + __entityUpdateResponse.entity_guid + " --> " + __entityUpdateResponse.message);
 
                                 } //if
                                 else {
 
                                     __auditEvent.entity_update_status = "NO UPDATE ATTEMPT";
-                                    _logger.info("NO UPDATE ATTEMPT")
+                                    _logger.verbose("[ entitysync::cycleSync ] NO UPDATE ATTEMPT")
                                 } //else
 
                                 // __reportingEvents.push(__auditEvent);
-                                _logger.verbose("This is the audit event: ", __auditEvent);
+                                _logger.verbose("[ entitysync::cycleSync ]This is the audit event: ", __auditEvent);
 
                             } //if
                             else {
 
-                                _logger.info("No match found for " + __entityUpdatePayload.name + " : " + __entityUpdatePayload.entity_guid);
+                                _logger.verbose("[ entitysync::cycleSync ] No match found for " + __entityUpdatePayload.name + " : " + __entityUpdatePayload.entity_guid);
                             } //else
                         } //for
                     } //if
                     else {
 
-                        _logger.error("Undefined entities returned from search: ", __nrResponseJson);
+                        _logger.error("[ entitysync::cycleSync ] Undefined entities returned from search: ", __nrResponseJson);
                         throw 'Undefined entities following entitySearch';
                     } //else
 
                 } //if
                 else {
 
-                    _logger.error("No entities returned from search: ", __nrResponseJson);
+                    _logger.error("[ entitysync::cycleSync ] No entities returned from search: ", __nrResponseJson);
                 } //else
 
 
@@ -148,12 +152,13 @@ async function cycleSync(_config, _logger) {
 
                 __cursorId = null;
                 __followCursor = false;
-                _logger.error("Problem resolving Entity details: ", _err);
+                _logger.error("[ entitysync::cycleSync ] Problem resolving Entity details: ", _err);
                 __cycleResponse = "Problem in Sync results may be incomplete"
             } //catch
 
         } //while
 
+        _logger.info("[ entitysync::cycleSync ] NR Entities Scanned: " + __total_nr_entities_returned);
     } //for
 
     //synchronization run reporting
