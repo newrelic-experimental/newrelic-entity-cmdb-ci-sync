@@ -163,7 +163,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
         if (_config.proxy.enabled) {
 
             __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
-            __response = await fetch('https://api.newrelic.com/graphql', {
+            __response = await fetch(_config.nr_graph_api_url, {
                 method: 'POST',
                 agent: __proxy_agent,
                 headers: {
@@ -178,7 +178,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
         } //if
         else {
 
-            __response = await fetch('https://api.newrelic.com/graphql', {
+            __response = await fetch(_config.nr_graph_api_url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -354,7 +354,7 @@ async function updateEntity(_config, _entityUpdate, _logger) {
             if (_config.proxy.enabled) {
 
                 __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
-                __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+                __apiResponse = await fetch(_config.nr_graph_api_url, {
                     method: 'POST',
                     agent: __proxy_agent,
                     headers: {
@@ -368,7 +368,7 @@ async function updateEntity(_config, _entityUpdate, _logger) {
             } //if
             else {
 
-                __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+                __apiResponse = await fetch(_config.nr_graph_api_url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -422,7 +422,7 @@ async function _removeExistingTag(_config, guid, tagKey, _logger) {
       if (_config.proxy.enabled) {
 
           __proxy_agent = new HttpsProxyAgent(_config.proxy.address);
-          __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+          __apiResponse = await fetch(_config.nr_graph_api_url, {
               method: 'POST',
               agent: __proxy_agent,
               headers: {
@@ -436,7 +436,7 @@ async function _removeExistingTag(_config, guid, tagKey, _logger) {
       } //if
       else {
 
-          __apiResponse = await fetch('https://api.newrelic.com/graphql', {
+          __apiResponse = await fetch(_config.nr_graph_api_url, {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -719,7 +719,7 @@ async function transmitEvents(_config, _eventsArray, _logger) {
             _logger.info("[ utilities :: transmitEvents ] Event Transmit Result: " + __response.ok);
         } //try
         catch (_err) {
-
+            _logger.error("[ utilities :: transmitEvents ]  Response object: " + JSON.stringify(__response));
             _logger.error("[ utilities :: transmitEvents ] Failure transmitting events. ", _err);
         } //catch
 
