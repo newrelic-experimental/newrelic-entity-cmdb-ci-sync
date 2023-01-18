@@ -34,16 +34,18 @@ The ```config.json``` file that is used to configure the synchronization service
 "nrdb_entitysync_event_name": "SNOW_ENTITY_SYNC",
 "nr_graph_api_key": "NRAK-###################",
 "nr_graph_api_account": "########",
+"nr_graph_api_url": "https://api.newrelic.com/graphql",
 "daily_sync_time": "3",
 "express_port": "7373",
 "encrypted_config": false,
 "version": "4",
 ```
 - _nrdb_insert_api_key_: The API key used to insert New Relic NRDB events.
-- _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written.
+- _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written. Note: EU datacenter customers should use _https://insights-collector.eu01.nr-data.net/v1/accounts/#######/events_
 - _nrdb_entitysync_event_name_: The event name for the entity sync housekeeping events.  
 - _nr_graph_api_key_: The API key used to query New Relic Entities via the [graph api](https://api.newrelic.com/graphiql?#query=)
 - _nr_graph_api_account_: The account number where entity sync events are being written. The graph api key must have access read from this account.
+- _nr_graph_api_url_: The graphql endpoint url for New Relic API. Note: EU datacenter customers should use _https://api.eu.newrelic.com/graphql_ 
 - _daily_sync_time_: The time of day GMT the synchronization process executes.
 - _express_port_: The port the service based deployment uses to communicate in http.
 - _encrypted_config_: (true|false) Whether the config file includes encrypted values.

@@ -104,8 +104,9 @@
     "nrdb_entitysync_event_name": "SNOW_ENTITY_SYNC",
     "nr_graph_api_key": "NRAK-###########",
     "nr_graph_api_account": "########",
+    "nr_graph_api_url": "https://api.newrelic.com/graphql",
     "daily_sync_time": "3",
     "express_port": "7373",
     "encrypted_config": false,
-    "version": "4"
+    "version": "5"
 }
