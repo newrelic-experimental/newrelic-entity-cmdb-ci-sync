@@ -196,7 +196,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
     } //try
     catch(_err) {
 
-        _logger.error("[ utilities::getNREntities ] Problem querying for entities: " + _domain + " cursor: " + _cursor);
+        _logger.error("[ utilities::getNREntities ] Problem querying for entities: " + _entity_shape.nr_entity_domain + " cursor: " + _cursor);
         _logger.error("[ utilities::getNREntities ]", _err);
     } //catch
 
