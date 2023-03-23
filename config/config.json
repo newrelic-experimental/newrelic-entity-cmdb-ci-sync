@@ -13,8 +13,7 @@
                 "support_group.value",
                 "owned_by.value"
             ],
-            "nr_entity_domain": "APM",
-            "nr_entity_type": "APPLICATION",
+            "nr_entity_search_query": "query: \"domain='APM' and type='APPLICATION'\"",
             "nr_entity_key": {
                 "type": "attribute",
                 "key": "name",
@@ -42,8 +41,7 @@
                 "sys_id",
                 "assignment_group"
             ],
-            "nr_entity_domain": "INFRA",
-            "nr_entity_type": "HOST",
+            "nr_entity_search_query": "query: \"domain='INFRA' and type='HOST' and tags.accountId='630060'\"",
             "nr_entity_key": {
                 "type": "tag",
                 "key": "fullHostname",
@@ -70,8 +68,7 @@
                 "sys_id",
                 "assignment_group"
             ],
-            "nr_entity_domain": "APM",
-            "nr_entity_type": "APPLICATION",
+            "nr_entity_search_query": "query: \"domain='APM' and type='APPLICATION' and tags.language='nodejs'\"",
             "nr_entity_key": {
                 "type": "attribute",
                 "key": "name",
@@ -114,5 +111,5 @@
     "express_port": "7373",
     "encrypted_config": false,
     "enable_audit_events": true,
-    "version": "6"
+    "version": "7"
 }

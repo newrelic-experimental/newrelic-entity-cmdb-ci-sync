@@ -118,7 +118,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
 
         __query = `{
             actor {
-              entitySearch(query: "domain='${_entity_shape.nr_entity_domain}' and type='${_entity_shape.nr_entity_type}'") {
+              entitySearch(${_entity_shape.nr_entity_search_query}) {
                 results {
                   entities {
                     guid
@@ -141,7 +141,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
 
         __query = `{
             actor {
-              entitySearch(query: "domain= '${_entity_shape.nr_entity_domain}' and type= '${_entity_shape.nr_entity_type}'") {
+              entitySearch(${_entity_shape.nr_entity_search_query}) {
                 results(cursor: "${_cursor}") {
                   entities {
                     guid

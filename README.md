@@ -97,8 +97,7 @@ The ```config.json``` file that is used to configure the synchronization service
         "sys_id",
         "support_group.value"
     ],
-    "nr_entity_domain": "APM",
-    "nr_entity_type": "APPLICATION",
+    "nr_entity_search_query": "query: \"domain='APM' and type='APPLICATION'\"",
     "nr_entity_key": {
         "type": "attribute",
         "key": "name",
@@ -121,8 +120,7 @@ The ```config.json``` file that is used to configure the synchronization service
 - _api_page_size_: The sysparm_limit and sysparm_offset values used during collection of CIs. For example, if set to 5 and there are 20 CIs to return, there will be 4 separate pages retrieved from CMDB (0-5, 5-10, 10-15, 15-20). Defaults to 10,000.
 - _api_method_: The http method (GET|POST)
 - _tags_: The attributes or tags on the provider entry that will be added to the New Relic Entity. Tags support nested objects from the provider to one level of depth. Use dot notion like ```support_group.value``` to access the values of nested objects.
-- _nr_entity_domain_: The New Relic Entity domain used for GraphQL entity search (APM | BROWSER | INFRA | SYNTH | MOBILE)
-- _nr_entity_type_: The New Relic Entity type used for GraphQL entity search (APPLICATION | DASHBOARD | HOST | MONITOR | WORKLOAD)
+- _nr_entity_search_query_: A entity search query compliant with New Relic's GraphQL entity search service. See [docs](https://docs.newrelic.com/docs/apis/nerdgraph/examples/nerdgraph-entities-api-tutorial/#search-query). 
 - _nr_entity_key_: An object that encapsulates the information needed to map metadaat from a New Relic Entity to a _provider_ source.
 - _nr_entity_key.type_: What type of Entity metadata will we use to reconcile the CI (attribute | tag). If _attribute_ is selected, the following _nr_entity_key.key_ value is limited to direct attributes of the Entity such as (name | accountId | guid). If _tag_ is selected the _nr_entity_key.key_ can be any value that matches a tag key possessed by the target Entity.
 - _nr_entity_key.key_: The New Relic Entity attribute that will be used to execute the resolution strategy.
