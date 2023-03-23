@@ -118,7 +118,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
 
         __query = `{
             actor {
-              entitySearch(query: "domain='${_entity_shape.nr_entity_domain}' and type='${_entity_shape.nr_entity_type}'") {
+              entitySearch(${_entity_shape.nr_entity_search_query}) {
                 results {
                   entities {
                     guid
@@ -131,6 +131,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
                   }
                   nextCursor
                 }
+                count
               }
             }
           }`;
@@ -140,7 +141,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
 
         __query = `{
             actor {
-              entitySearch(query: "domain= '${_entity_shape.nr_entity_domain}' and type= '${_entity_shape.nr_entity_type}'") {
+              entitySearch(${_entity_shape.nr_entity_search_query}) {
                 results(cursor: "${_cursor}") {
                   entities {
                     guid
@@ -153,6 +154,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
                   }
                   nextCursor
                 }
+                count
               }
             }
           }`;
@@ -205,7 +207,7 @@ async function getNREntities(_config, _entity_shape, _cursor, _logger) {
 
 async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
 
-   _logger.debug("[ utilities::reconcileEntity ] Entity to reconcile: ", _entity);
+   _logger.debug("[ utilities::reconcileEntity ] Entity to reconcile: ", _entity); 
     var __entityUpdatePayload = {
         found: false,
         entity_guid: _entity.guid,
@@ -234,7 +236,7 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
             } // if
         } //if
         else {
-            _logger.error("[utilities:reconcileEntity] No tag value found for " + _ciType.nr_entity_key.key + " on entity " + _entity.name);
+            _logger.error("[ utilities:reconcileEntity ] No tag value found for " + _ciType.nr_entity_key.key + " on entity " + _entity.name);
             return(__entityUpdatePayload);
         } //else
 
@@ -242,13 +244,14 @@ async function reconcileEntity(_ciType, _entity, _candidateCIs, _logger) {
     else {
 
         // unknown type key - no match will be possible
-        _logger.error("[utilities:reconcileEntity] Unexpected nr_entity_key.type encountered " + _ciType.nr_entity_key.type + " no match possible. Check your config.json.");
+        _logger.error("[ utilities:reconcileEntity ] Unexpected nr_entity_key.type encountered " + _ciType.nr_entity_key.type + " no match possible. Check your config.json.");
         return(__entityUpdatePayload);
     } //else
 
     // loop the array to provide opportunities for deep inspection
     for (var i = 0; i < _candidateCIs.length; i++) {
 
+        //_logger.info("CI: ------> " + JSON.stringify(_candidateCIs[i]));
         // select matching strategy
         if (_ciType.nr_entity_key.strategy === "caseless_match") {
 
@@ -337,7 +340,7 @@ async function updateEntity(_config, _entityUpdate, _logger) {
            __entityUpdateResponse.message = "DELETION FAILURE";
          }
        } else {
-         _logger.info("Adding tag: " + _entityUpdate.tags[i].key + ":" + _entityUpdate.tags[i].value);
+         _logger.info("[ utilities::updateEntity ] Adding tag: " + _entityUpdate.tags[i].key + ":" + _entityUpdate.tags[i].value);
        }
 
        __mutation = `mutation {
@@ -381,8 +384,14 @@ async function updateEntity(_config, _entityUpdate, _logger) {
             } //else
 
             __responseJson = await __apiResponse.json();
-            _logger.info("[ utilities::updateEntity ] Write response", __responseJson);
-            _logger.info("[ utilities::updateEntity ] Write response errz", __responseJson.data.taggingAddTagsToEntity.errors); //TODO adding - review context
+
+            _logger.info("[ utilities::updateEntity ] Write response. tag: " + _entityUpdate.tags[i].key + " value: " + _entityUpdate.tags[i].value, __responseJson);
+
+            if (__responseJson.data.taggingAddTagsToEntity.errors.length > 0) {
+                _logger.error("[ utilities::updateEntity ] Write response errors: " + __responseJson.data.taggingAddTagsToEntity.errors[0].message);
+                __entityUpdateResponse.message = "FAILURE: " + JSON.stringify(__responseJson.data.taggingAddTagsToEntity.errors[0].message);
+            } //if
+
 
         } //try
         catch(_err) {
