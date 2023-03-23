@@ -38,7 +38,8 @@ The ```config.json``` file that is used to configure the synchronization service
 "daily_sync_time": "3",
 "express_port": "7373",
 "encrypted_config": false,
-"version": "4",
+"enable_audit_events": true,
+"version": "6",
 ```
 - _nrdb_insert_api_key_: The API key used to insert New Relic NRDB events.
 - _nrdb_insert_url_: The New Relic NRDB insert URL, please update to reflect the account ID where insert events are to be written. Note: EU datacenter customers should use _https://insights-collector.eu01.nr-data.net/v1/accounts/#######/events_
@@ -49,6 +50,7 @@ The ```config.json``` file that is used to configure the synchronization service
 - _daily_sync_time_: The time of day GMT the synchronization process executes.
 - _express_port_: The port the service based deployment uses to communicate in http.
 - _encrypted_config_: (true|false) Whether the config file includes encrypted values.
+- _enable_audit_events_: (true|false) Changes to entities will be recorded to NRDB when enabled.
 - _version_: specifies the current version of this config document.
 
 **Provider Object**
@@ -107,7 +109,8 @@ The ```config.json``` file that is used to configure the synchronization service
         "sys_class_name": "SNOW_CI_CLASS",
         "sys_id": "SNOW_CMDB_CI",
         "support_group.value": "SNOW_SUPPORT_GROUP"
-    }
+    },
+    "description": "application cis"
 }, ... ]
 ```
 - _ci_types_: An array of ci_type objects. These objects define the details of the API calls to the provider system, and match those details to a New Relic Entity Search API call.
@@ -126,13 +129,14 @@ The ```config.json``` file that is used to configure the synchronization service
 - _nr_entity_key.strategy_: How the Entity and _Provider_ key values are to be compared (caseless_match|exact_match|exact_contains|caseless_contains|inverse_caseless_contains).
 - _nr_entity_update_: (true|false) Whether to update the Entity discovered if the Entity tag alread exists. False ignores the update if the tag exists, true updates no matter the value specified.  
 - _nr_entity_tag_key_: The New Relic Entity key value (name) for the _provider_ attribute value.
+- _description_: free form text that describes this CI for the purpose of reporting. 
 
 ### Config file encryption
 
 To encrypt sensitive fields in the config.json, execute the following proceedure:
 - Create your config.json with all values in clear text
 - From the commandline run ```node ./js/index.js encrypt <my_awesome_passphrase>```
-- The command above will set ```encrypted_config: true``` use the passphrase for a one way AES encruption of the following config values:
+- The command above will set ```encrypted_config: true``` use the passphrase for a one way AES encryption of the following config values:
   - ```provider.api_key```
   - ```provider.api_uname```
   - ```provider.api_pword```

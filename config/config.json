@@ -26,7 +26,8 @@
                 "sys_id": "SNOW_CMDB_CI",
                 "support_group.value": "SNOW_CMDB_SUPPORT_GROUP",
                 "owned_by.value": "SNOW_CMDB_OWNED_BY"
-            }
+            },
+            "description": "application cis"
         },
         {
             "type": "cmdb_ci_server",
@@ -36,6 +37,7 @@
             "api_page_size": 10000,
             "api_method": "GET",
             "tags": [
+                "asset_tag",
                 "sys_class_name",
                 "sys_id",
                 "assignment_group"
@@ -43,16 +45,18 @@
             "nr_entity_domain": "INFRA",
             "nr_entity_type": "HOST",
             "nr_entity_key": {
-                "type": "attribute",
-                "key": "name",
+                "type": "tag",
+                "key": "fullHostname",
                 "strategy": "caseless_match"
             },
             "nr_entity_update": false,
             "nr_entity_tag_key": {
                 "sys_class_name": "SNOW_CI_CLASS",
                 "sys_id": "SNOW_CMDB_CI",
-                "assignment_group": "SNOW_ASSIGN_GROUP"
-            }
+                "assignment_group": "SNOW_ASSIGN_GROUP",
+                "asset_tag": "ASSET_TAG"
+            },
+            "description": "server cis"
         },
         {
             "type": "cmdb_ci_app_server_tomcat",
@@ -78,7 +82,8 @@
                 "sys_class_name": "SNOW_CI_CLASS",
                 "sys_id": "SNOW_CMDB_CI",
                 "assignment_group": "SNOW_ASSIGN_GROUP"
-            }
+            },
+            "description": "app server cis"
         }
     ],
     "provider" : {
@@ -99,14 +104,15 @@
         "max_size": "20m",
         "max_files": "7d"
     },
-    "nrdb_insert_api_key": "NRII-###########",
+    "nrdb_insert_api_key": "###########",
     "nrdb_insert_url": "https://insights-collector.newrelic.com/v1/accounts/###########/events",
     "nrdb_entitysync_event_name": "SNOW_ENTITY_SYNC",
-    "nr_graph_api_key": "NRAK-###########",
-    "nr_graph_api_account": "########",
+    "nr_graph_api_key": "###########",
+    "nr_graph_api_account": "###########",
     "nr_graph_api_url": "https://api.newrelic.com/graphql",
     "daily_sync_time": "3",
     "express_port": "7373",
     "encrypted_config": false,
-    "version": "5"
+    "enable_audit_events": true,
+    "version": "6"
 }

@@ -14,12 +14,12 @@ async function cycleSync(_config, _logger) {
     var __entityUpdatePayload = null;
     var __entityUpdateResponse = null;
     var __reportingEvents = [];
-    var __total_entities_processes = 0;
     var __total_cis_returned = 0;
     var __total_nr_entities_returned = 0;
     var __total_entity_updates = 0;
     var __total_entity_duplicates = 0;
     var __total_entity_failures = 0;
+    var __entities_returned_graph = 0;
     var __auditEvent = null;
     var __cycleResponse = 'Cycle Complete';
 
@@ -64,39 +64,38 @@ async function cycleSync(_config, _logger) {
                     if (__nrResponseJson.data.actor.entitySearch.results.entities !== undefined) {
 
                         let entityLength = __nrResponseJson.data.actor.entitySearch.results.entities.length;
-                        _logger.verbose("[ entitysync::cycleSync ] New Relic Entities Returned: " + entityLength)
+                        _logger.verbose("[ entitysync::cycleSync ] New Relic Entities Returned: " + entityLength);
+                        __entities_returned_graph = __nrResponseJson.data.actor.entitySearch.count;
                         __total_nr_entities_returned += entityLength;
 
                         for (var j = 0; j < __nrResponseJson.data.actor.entitySearch.results.entities.length; j++) {
 
-                            __total_entities_processes++; // reporting number of entities processed
                             __entityUpdatePayload = await reconcileEntity(_config.ci_types[i], __nrResponseJson.data.actor.entitySearch.results.entities[j], __cis, _logger);
 
                             if (__entityUpdatePayload.found) {
                                 _logger.debug("[ entitysync::cycleSync ] Found Entity: " + __entityUpdatePayload.name)
+        
+                                //record audit message of a reconciled CI/Entity pair
+                                __auditEvent = {};
+                                __auditEvent.eventType = _config.nrdb_entitysync_event_name;
+                                __auditEvent.action = "ci_processed";
+                                __auditEvent.version = _config.version;
+                                __auditEvent.found = __entityUpdatePayload.found;
+                                __auditEvent.entity_guid = __entityUpdatePayload.entity_guid;
+                                __auditEvent.entity_name = __entityUpdatePayload.name;
+                                __auditEvent.entity_update_allowed = _config.provider.update_entity;
 
-                                // //record audit message of a reconciled CI/Entity pair
-                                // __auditEvent = {};
-                                // __auditEvent.eventType = _config.nrdb_entitysync_event_name;
-                                // __auditEvent.action = "ci_processed";
-                                // __auditEvent.version = _config.version;
-                                // __auditEvent.found = __entityUpdatePayload.found;
-                                // __auditEvent.entity_guid = __entityUpdatePayload.entity_guid;
-                                // __auditEvent.entity_name = __entityUpdatePayload.name;
-                                // __auditEvent.entity_update_allowed = _config.provider.update_entity;
-
-                                // //add the new tags to the audit event
-                                // for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
-                                //     _logger.verbose("[ entitysync::cycleSync ] tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
-                                //     __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value;
-                                // } //for
-
+                                //add the new tags to the audit event
+                                for (var zz = 0; zz < __entityUpdatePayload.tags.length; zz++) {
+                                    _logger.verbose("[ entitysync::cycleSync ] tag candidate: " + __entityUpdatePayload.tags[zz].key + " with value " + __entityUpdatePayload.tags[zz].value);
+                                    __auditEvent[__entityUpdatePayload.tags[zz].key] = __entityUpdatePayload.tags[zz].value;
+                                } //for
 
                                 if (_config.provider.update_entity === true) {
 
                                     __entityUpdateResponse = await updateEntity(_config, __entityUpdatePayload, _logger);
-                                    // __auditEvent.entity_update_status = __entityUpdateResponse.message;
-
+                                    __auditEvent.entity_update_status = __entityUpdateResponse.message;
+                                    
                                     if (__entityUpdateResponse.message === "SUCCESS") {
                                         __total_entity_updates++;
                                     } //if
@@ -115,7 +114,11 @@ async function cycleSync(_config, _logger) {
                                     _logger.verbose("[ entitysync::cycleSync ] NO UPDATE ATTEMPT")
                                 } //else
 
-                                // __reportingEvents.push(__auditEvent);
+                                // add the audit event to reporting structure
+                                if (_config.enable_audit_events) {
+                                    __reportingEvents.push(__auditEvent);
+                                } //if
+                                
                                 _logger.verbose("[ entitysync::cycleSync ]This is the audit event: ", __auditEvent);
 
                             } //if
@@ -152,26 +155,34 @@ async function cycleSync(_config, _logger) {
 
                 __cursorId = null;
                 __followCursor = false;
-                _logger.error("[ entitysync::cycleSync ] Problem resolving Entity details: ", _err);
+                _logger.error("[ entitysync::cycleSync ] Problem resolving entity details: ", _err);
                 __cycleResponse = "Problem in Sync results may be incomplete"
             } //catch
 
         } //while
 
-        _logger.info("[ entitysync::cycleSync ] NR Entities Scanned: " + __total_nr_entities_returned);
+        _logger.info("[ entitysync::cycleSync ] NR entities scanned: " + __total_nr_entities_returned);
+        _logger.info("[ entitysync::cycleSync ] New Relic graph query entity count (control): " + __entities_returned_graph);
+
+        //synchronization run reporting
+        __reportingEvents.push({
+            "eventType": _config.nrdb_entitysync_event_name,
+            "action": "entity_complete",
+            "version": _config.version,
+            "ci_type": _config.ci_types[i].type,
+            "ci_description": _config.ci_types[i].description,
+            "nr_entity_type": _config.ci_types[i].nr_entity_type,
+            "nr_entity_domain": _config.ci_types[i].nr_entity_domain,
+            "total_cis_returned": __total_cis_returned,
+            "total_entities_update_success": __total_entity_updates,
+            "total_entities_update_failure": __total_entity_failures,
+            "total_entities_update_skipped": __total_entity_duplicates,
+            "total_entities_scanned": __total_nr_entities_returned,
+            "total_entities_returned": __entities_returned_graph
+        });
     } //for
 
-    //synchronization run reporting
-    __reportingEvents.push({
-        "eventType": _config.nrdb_entitysync_event_name,
-        "action": "entity_complete",
-        "version": _config.version,
-        "total_entities_processed": __total_entities_processes,
-        "total_cis_returned": __total_cis_returned,
-        "total_entities_update_success": __total_entity_updates,
-        "total_entities_update_failure": __total_entity_failures,
-        "total_entities_update_skipped": __total_entity_duplicates
-    });
+   
 
     if (__reportingEvents.length > 0) {
 
