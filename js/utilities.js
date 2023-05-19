@@ -678,7 +678,7 @@ async function _getServiceNowCIs(_config, _ci_type, _logger) {
             _logger.debug("[ utilities :: _getServiceNowCIs ] -> candidate cis array length: " + __json_response.result.length);
             _logger.debug("[ utilities :: _getServiceNowCIs ] -> cis array length - b: " + __cis.length);
           
-          } while (__offset < totalRecords) //do-while
+          } while (__offset < __totalRecords) //do-while
         } //if
     } //try
     catch (_err) {
