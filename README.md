@@ -1,4 +1,12 @@
-[![New Relic Experimental header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#new-relic-experimental)
+<a href="https://opensource.newrelic.com/oss-category/#archived"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/dark/Archived.png"><source media="(prefers-color-scheme: light)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Archived.png"><img alt="New Relic Open Source archived project banner." src="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Archived.png"></picture></a>
+
+# Archival Notice
+
+❗Notice: This project has been archived _as is_ and is no longer actively maintained.
+
+New Relic has released an updated Community project nr-entity-tag-sync: [https://github.com/newrelic/nr-entity-tag-sync](https://github.com/newrelic/nr-entity-tag-sync). This is built with standard New Relic tooling to permit better extensibility and maintenance for CMDB and other meta-data synchronization needs.
+
+Thank-you for those that used the CI Sync tool, provided feedback and were patient as we slowly updated it. 
 
 # New Relic Entity CMDB CI Sync
 
